@@ -1,13 +1,18 @@
 Capistrano::Configuration.instance.load do
 
   _cset(:sidekiq_default_hooks) { true }
-  _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" }
-  _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" }
-  _cset(:sidekiq_timeout) { 10 }
-  _cset(:sidekiq_role) { :app }
+
   _cset(:sidekiq_pid) { File.join(shared_path, 'pids', 'sidekiq.pid') }
   _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
+
+  _cset(:sidekiq_options) { nil }
+
+  _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" }
+  _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" }
+
+  _cset(:sidekiq_timeout) { 10 }
+  _cset(:sidekiq_role) { :app }
   _cset(:sidekiq_processes) { 1 }
 
   if fetch(:sidekiq_default_hooks)
@@ -46,14 +51,21 @@ Capistrano::Configuration.instance.load do
     desc 'Start sidekiq'
     task :start, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
       for_each_process do |pid_file, idx|
-        command = "-i #{idx} -P #{pid_file} #{fetch(:sidekiq_options)} -e #{fetch(:sidekiq_env)} -L #{fetch(:sidekiq_log)}"
+        args = []
+        args.push "--index #{idx}"
+        args.push "--pidfile #{pid_file}"
+        args.push "--environment #{fetch(:sidekiq_env)}"
+        args.push "--logfile #{fetch(:sidekiq_log)}"
+        args.push fetch(:sidekiq_options)
+
         if defined?(JRUBY_VERSION)
-          command = "#{command} >/dev/null 2>&1 &"
-          logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will be running without the -d flag.'
+          args.push ">/dev/null 2>&1 &"
+          logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
         else
-          command = "-d #{command}"
+          args.push "--daemon"
         end
-        run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{command} ", :pty => false
+
+        run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", :pty => false
       end
     end
 
