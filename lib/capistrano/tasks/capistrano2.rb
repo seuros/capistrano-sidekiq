@@ -46,7 +46,14 @@ Capistrano::Configuration.instance.load do
     desc 'Start sidekiq'
     task :start, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
       for_each_process do |pid_file, idx|
-        run "cd #{current_path} ; nohup #{fetch(:sidekiq_cmd)} -e #{fetch(:sidekiq_env)} -i #{idx} -P #{pid_file} >> #{fetch(:sidekiq_log)} 2>&1 &", :pty => false
+        command = "-i #{idx} -P #{pid_file} #{fetch(:sidekiq_options)} -e #{fetch(:sidekiq_env)} -L #{fetch(:sidekiq_log)}"
+        if defined?(JRUBY_VERSION)
+          command = "#{command} >/dev/null 2>&1 &"
+          logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will be running without the -d flag.'
+        else
+          command = "-d #{command}"
+        end
+        run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{command} ", :pty => false
       end
     end
 
