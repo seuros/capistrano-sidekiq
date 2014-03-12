@@ -18,7 +18,7 @@ end
 namespace :sidekiq do
   def for_each_process(&block)
     fetch(:sidekiq_processes).times do |idx|
-      pid_file = if idx.zero?
+      pid_file = if idx.zero? && fetch(:sidekiq_processes).to_i <= 1
         fetch(:sidekiq_pid)
       else
         fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
