@@ -3,9 +3,11 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_default_hooks) { true }
   _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" }
   _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" }
-  _cset(:sidekiq_timeout)   { 10 }
-  _cset(:sidekiq_role)      { :app }
-  _cset(:sidekiq_pid)       { "#{current_path}/tmp/pids/sidekiq.pid" }
+  _cset(:sidekiq_timeout) { 10 }
+  _cset(:sidekiq_role) { :app }
+  _cset(:sidekiq_pid) { File.join(shared_path, 'pids', 'sidekiq.pid') }
+  _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
+  _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
   _cset(:sidekiq_processes) { 1 }
 
   if fetch(:sidekiq_default_hooks)
@@ -18,7 +20,12 @@ Capistrano::Configuration.instance.load do
   namespace :sidekiq do
     def for_each_process(&block)
       fetch(:sidekiq_processes).times do |idx|
-        yield((idx == 0 ? "#{fetch(:sidekiq_pid)}" : "#{fetch(:sidekiq_pid)}-#{idx}"), idx)
+        pid_file = if idx.zero?
+          fetch(:sidekiq_pid)
+        else
+          fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        end
+        yield(pid_file, idx)
       end
     end
 
@@ -38,9 +45,8 @@ Capistrano::Configuration.instance.load do
 
     desc 'Start sidekiq'
     task :start, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
-      rails_env = fetch(:rails_env, 'production')
       for_each_process do |pid_file, idx|
-        run "cd #{current_path} ; nohup #{fetch(:sidekiq_cmd)} -e #{rails_env} -i #{idx} -P #{pid_file} >> #{current_path}/log/sidekiq.log 2>&1 &", :pty => false
+        run "cd #{current_path} ; nohup #{fetch(:sidekiq_cmd)} -e #{fetch(:sidekiq_env)} -i #{idx} -P #{pid_file} >> #{fetch(:sidekiq_log)} 2>&1 &", :pty => false
       end
     end
 
