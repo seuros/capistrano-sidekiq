@@ -55,7 +55,7 @@ Capistrano::Configuration.instance.load do
         args.push "--index #{idx}"
         args.push "--pidfile #{pid_file}"
         args.push "--environment #{fetch(:sidekiq_env)}"
-        args.push "--logfile #{fetch(:sidekiq_log)}"
+        args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
         args.push fetch(:sidekiq_options)
 
         if defined?(JRUBY_VERSION)
