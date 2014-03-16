@@ -6,8 +6,7 @@ namespace :load do
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
     set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
 
-    # "-d -i INT -P PATH" are added automatically.
-    set :sidekiq_options, -> { "-e #{fetch(:sidekiq_env)} -L #{fetch(:sidekiq_log)}" }
+    set :sidekiq_options, -> { nil }
 
     set :sidekiq_timeout, -> { 10 }
     set :sidekiq_role, -> { :app }
@@ -75,14 +74,21 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do
       within current_path do
         for_each_process do |pid_file, idx|
-          command = "-i #{idx} -P #{pid_file} #{fetch(:sidekiq_options)}"
+          args = []
+          args.push "--index #{idx}"
+          args.push "--pidfile #{pid_file}"
+          args.push "--environment #{fetch(:sidekiq_env)}"
+          args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
+          args.push fetch(:sidekiq_options)
+
           if defined?(JRUBY_VERSION)
-            command = "#{command} >/dev/null 2>&1 &"
-            warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will be running without the -d flag.'
+            args.push ">/dev/null 2>&1 &"
+            warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
           else
-            command = "-d #{command}"
+            args.push "--daemon"
           end
-          execute :bundle, :exec, :sidekiq, command
+
+          execute :bundle, :exec, :sidekiq, args.compact.join(' ')          
         end
       end
     end
