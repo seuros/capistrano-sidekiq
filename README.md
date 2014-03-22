@@ -32,7 +32,7 @@ Configurable options, shown here with defaults:
     :sidekiq_pid =>  File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
     :sidekiq_env =>  fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
     :sidekiq_log =>  File.join(shared_path, 'log', 'sidekiq.log')
-    :sidekiq_options =>  "-e #{fetch(:sidekiq_env)} -L #{fetch(:sidekiq_log)}"
+    :sidekiq_options =>  nil
     :sidekiq_timeout =>  10
     :sidekiq_role =>  :app
     :sidekiq_processes =>  1
