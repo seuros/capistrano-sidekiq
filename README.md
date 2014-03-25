@@ -34,6 +34,8 @@ Configurable options, shown here with defaults:
     :sidekiq_env =>  fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
     :sidekiq_log =>  File.join(shared_path, 'log', 'sidekiq.log')
     :sidekiq_options =>  nil
+    :sidekiq_require => nil
+    :sidekiq_tag => nil
     :sidekiq_timeout =>  10
     :sidekiq_role =>  :app
     :sidekiq_processes =>  1
