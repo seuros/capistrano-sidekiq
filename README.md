@@ -22,6 +22,7 @@ And then execute:
     # Capfile
 
     require 'capistrano/sidekiq'
+    require 'capistrano/sidekiq/monit #to require monit tasks (V0.2.0+)
 ```
 
 
