@@ -113,6 +113,20 @@ namespace :sidekiq do
     invoke 'sidekiq:start'
   end
 
+  desc 'Rolling-restart sidekiq'
+  task :rolling_restart do
+    on roles fetch(:sidekiq_role) do
+      within current_path do
+        for_each_process(true) do |pid_file, idx|
+          if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
+            stop_sidekiq(pid_file)
+          end
+          start_sidekiq(pid_file, idx)
+        end
+      end
+    end
+  end
+
   #delete any pid file not in use
   task :cleanup do
     on roles fetch(:sidekiq_role) do
