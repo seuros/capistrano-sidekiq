@@ -101,7 +101,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do
       within current_path do
         for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file)
+          start_sidekiq(pid_file, idx)
         end
       end
     end
