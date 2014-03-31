@@ -34,38 +34,58 @@ Capistrano::Configuration.instance.load do
       end
     end
 
+    def quiet_process(pid_file, idx)
+      run "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} quiet #{pid_file} ; else echo 'Sidekiq is not running'; fi"
+    end
+
+    def stop_process(pid_file, idx)
+      run "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} stop #{pid_file} #{fetch :sidekiq_timeout} ; else echo 'Sidekiq is not running'; fi"
+    end
+
+    def start_process(pid_file, idx)
+      args = []
+      args.push "--index #{idx}"
+      args.push "--pidfile #{pid_file}"
+      args.push "--environment #{fetch(:sidekiq_env)}"
+      args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
+      args.push fetch(:sidekiq_options)
+
+      if defined?(JRUBY_VERSION)
+        args.push ">/dev/null 2>&1 &"
+        logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
+      else
+        args.push "--daemon"
+      end
+
+      run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", :pty => false
+    end
+
     desc 'Quiet sidekiq (stop accepting new work)'
     task :quiet, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
       for_each_process do |pid_file, idx|
-        run "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} quiet #{pid_file} ; else echo 'Sidekiq is not running'; fi"
+        quiet_process(pid_file, idx)
       end
     end
 
     desc 'Stop sidekiq'
     task :stop, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
       for_each_process do |pid_file, idx|
-        run "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} stop #{pid_file} #{fetch :sidekiq_timeout} ; else echo 'Sidekiq is not running'; fi"
+        stop_process(pid_file, idx)
       end
     end
 
     desc 'Start sidekiq'
     task :start, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
       for_each_process do |pid_file, idx|
-        args = []
-        args.push "--index #{idx}"
-        args.push "--pidfile #{pid_file}"
-        args.push "--environment #{fetch(:sidekiq_env)}"
-        args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
-        args.push fetch(:sidekiq_options)
+        start_process(pid_file, idx)
+      end
+    end
 
-        if defined?(JRUBY_VERSION)
-          args.push ">/dev/null 2>&1 &"
-          logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
-        else
-          args.push "--daemon"
-        end
-
-        run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", :pty => false
+    desc 'Rolling-restart sidekiq'
+    task :rolling_restart, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+      for_each_process do |pid_file, idx|
+        stop_process(pid_file, idx)
+        start_process(pid_file, idx)
       end
     end
 
