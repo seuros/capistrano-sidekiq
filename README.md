@@ -22,7 +22,7 @@ And then execute:
     # Capfile
 
     require 'capistrano/sidekiq'
-    require 'capistrano/sidekiq/monit #to require monit tasks (V0.2.0+)
+    require 'capistrano/sidekiq/monit' #to require monit tasks (V0.2.0+)
 ```
 
 
@@ -42,7 +42,12 @@ Configurable options, shown here with defaults:
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"  # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
+## Changelog
+- 0.2.0: Added sidekiq:rolling_restart - @jlecour
 
+## Contributors
+
+- [Jérémy Lecour] (https://github.com/jlecour)
 
 ## Contributing
 
