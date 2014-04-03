@@ -98,8 +98,8 @@ namespace :sidekiq do
   task :stop do
     on roles fetch(:sidekiq_role) do
       for_each_process(true) do |pid_file, idx|
-        if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
-          within current_path do
+        within current_path do
+          if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
             stop_sidekiq(pid_file)
           end
         end
@@ -142,8 +142,10 @@ namespace :sidekiq do
   task :cleanup do
     on roles fetch(:sidekiq_role) do
       for_each_process do |pid_file, idx|
-        if test("[ -f #{pid_file} ]")
-          execute "rm #{pid_file}" unless test("kill -0 $( cat #{pid_file} )")
+        within current_path do
+          if test("[ -f #{pid_file} ]")
+            execute "rm #{pid_file}" unless test("kill -0 $( cat #{pid_file} )")
+          end
         end
       end
     end
