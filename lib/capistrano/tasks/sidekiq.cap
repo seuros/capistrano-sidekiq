@@ -26,7 +26,9 @@ namespace :sidekiq do
     pids = processes_pids
     pids.reverse! if reverse
     pids.each_with_index do |pid_file, idx|
-      yield(pid_file, idx)
+      within current_path do
+        yield(pid_file, idx)
+      end
     end
   end
 
@@ -39,6 +41,14 @@ namespace :sidekiq do
 
     end
     pids
+  end
+
+  def pid_process_exists?(pid_file)
+    pid_file_exists?(pid_file) and test("kill -0 $( cat #{pid_file} )")
+  end
+
+  def pid_file_exists?(pid_file)
+    test("[ -f #{pid_file} ]")
   end
 
   def stop_sidekiq(pid_file)
@@ -85,10 +95,8 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_role) do
       for_each_process(true) do |pid_file, idx|
-        if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
-          within current_path do
-            quit_sidekiq(pid_file)
-          end
+        if pid_process_exists?(pid_file)
+          quit_sidekiq(pid_file)
         end
       end
     end
@@ -98,10 +106,8 @@ namespace :sidekiq do
   task :stop do
     on roles fetch(:sidekiq_role) do
       for_each_process(true) do |pid_file, idx|
-        within current_path do
-          if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
-            stop_sidekiq(pid_file)
-          end
+        if pid_process_exists?(pid_file)
+          stop_sidekiq(pid_file)
         end
       end
     end
@@ -110,10 +116,8 @@ namespace :sidekiq do
   desc 'Start sidekiq'
   task :start do
     on roles fetch(:sidekiq_role) do
-      within current_path do
-        for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx)
-        end
+      for_each_process do |pid_file, idx|
+        start_sidekiq(pid_file, idx)
       end
     end
   end
@@ -127,13 +131,11 @@ namespace :sidekiq do
   desc 'Rolling-restart sidekiq'
   task :rolling_restart do
     on roles fetch(:sidekiq_role) do
-      within current_path do
-        for_each_process(true) do |pid_file, idx|
-          if test("[ -f #{pid_file} ]") and test("kill -0 $( cat #{pid_file} )")
-            stop_sidekiq(pid_file)
-          end
-          start_sidekiq(pid_file, idx)
+      for_each_process(true) do |pid_file, idx|
+        if pid_process_exists?(pid_file)
+          stop_sidekiq(pid_file)
         end
+        start_sidekiq(pid_file, idx)
       end
     end
   end
@@ -142,10 +144,8 @@ namespace :sidekiq do
   task :cleanup do
     on roles fetch(:sidekiq_role) do
       for_each_process do |pid_file, idx|
-        within current_path do
-          if test("[ -f #{pid_file} ]")
-            execute "rm #{pid_file}" unless test("kill -0 $( cat #{pid_file} )")
-          end
+        if pid_file_exists?(pid_file)
+          execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
         end
       end
     end
@@ -156,11 +156,9 @@ namespace :sidekiq do
   task :respawn do
     invoke 'sidekiq:cleanup'
     on roles fetch(:sidekiq_role) do
-      within current_path do
-        for_each_process do |pid_file, idx|
-          unless test("[ -f #{pid_file} ]")
-            start_sidekiq(pid_file, idx)
-          end
+      for_each_process do |pid_file, idx|
+        unless pid_file_exists?(pid_file)
+          start_sidekiq(pid_file, idx)
         end
       end
     end
