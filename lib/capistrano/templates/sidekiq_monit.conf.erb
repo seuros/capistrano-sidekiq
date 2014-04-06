@@ -1,0 +1,9 @@
+# Monit configuration for Sidekiq :  <%= fetch(:application) %>
+<% processes_pids.each_with_index do |pid_file, idx| %>
+check process <%= sidekiq_service_name(idx) %>
+  with pidfile "<%= pid_file %>"
+  start program = "/usr/bin/sudo -u <%= @role.user %> /bin/bash -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiq  -P <%= pid_file  %>'" with timeout 30 seconds
+  stop program = "/usr/bin/sudo -u <%= @role.user %> /bin/bash -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiqctl stop <%= pid_file %>'" with timeout <%= fetch(:sidekiq_timeout).to_i + 10  %> seconds
+  group <%= fetch(:sidekiq_monit_group, fetch(:application)) %>-sidekiq
+
+<% end %>
