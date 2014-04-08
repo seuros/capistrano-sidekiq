@@ -32,7 +32,7 @@ namespace :sidekiq do
     end
   end
 
-  def   processes_pids
+  def processes_pids
     pids = []
     fetch(:sidekiq_processes).times do |idx|
       pids.push (idx.zero? && fetch(:sidekiq_processes) <= 1) ?
@@ -52,7 +52,11 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    if  fetch(:stop_sidekiq_in_background,fetch(:sidekiq_run_in_background))
+      background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    else
+      execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    end
   end
 
   def quit_sidekiq(pid_file)
@@ -81,7 +85,11 @@ namespace :sidekiq do
       args.push "--daemon"
     end
 
-    execute :bundle, :exec, :sidekiq, args.compact.join(' ')
+    if  fetch(:start_sidekiq_in_background,fetch(:sidekiq_run_in_background))
+      background :bundle, :exec, :sidekiq, args.compact.join(' ')
+    else
+      execute :bundle, :exec, :sidekiq, args.compact.join(' ')
+    end
   end
 
   task :add_default_hooks do
