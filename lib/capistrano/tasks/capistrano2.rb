@@ -3,13 +3,13 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_default_hooks) { true }
 
   _cset(:sidekiq_pid) { File.join(shared_path, 'pids', 'sidekiq.pid') }
-  _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
+  _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, 'production')) }
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
 
   _cset(:sidekiq_options) { nil }
 
-  _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" }
-  _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" }
+  _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiq" }
+  _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiqctl" }
 
   _cset(:sidekiq_timeout) { 10 }
   _cset(:sidekiq_role) { :app }
@@ -51,10 +51,10 @@ Capistrano::Configuration.instance.load do
       args.push fetch(:sidekiq_options)
 
       if defined?(JRUBY_VERSION)
-        args.push ">/dev/null 2>&1 &"
+        args.push '>/dev/null 2>&1 &'
         logger.info 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
       else
-        args.push "--daemon"
+        args.push '--daemon'
       end
 
       run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", :pty => false

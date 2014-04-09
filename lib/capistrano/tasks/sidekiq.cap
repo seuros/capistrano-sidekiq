@@ -52,7 +52,7 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    if  fetch(:stop_sidekiq_in_background,fetch(:sidekiq_run_in_background))
+    if  fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     else
       execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
@@ -85,7 +85,7 @@ namespace :sidekiq do
       args.push "--daemon"
     end
 
-    if  fetch(:start_sidekiq_in_background,fetch(:sidekiq_run_in_background))
+    if  fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :bundle, :exec, :sidekiq, args.compact.join(' ')
     else
       execute :bundle, :exec, :sidekiq, args.compact.join(' ')
@@ -102,9 +102,11 @@ namespace :sidekiq do
   desc 'Quiet sidekiq (stop processing new tasks)'
   task :quiet do
     on roles fetch(:sidekiq_role) do
-      for_each_process(true) do |pid_file, idx|
-        if pid_process_exists?(pid_file)
-          quit_sidekiq(pid_file)
+      if test("[ -d #{current_path} ]")   #fixes #11
+        for_each_process(true) do |pid_file, idx|
+          if pid_process_exists?(pid_file)
+            quit_sidekiq(pid_file)
+          end
         end
       end
     end
@@ -175,12 +177,12 @@ namespace :sidekiq do
 
   def template_sidekiq(from, to, role)
     [
-        "lib/capistrano/templates/#{from}-#{role.hostname}-#{fetch(:stage)}.rb",
-        "lib/capistrano/templates/#{from}-#{role.hostname}.rb",
-        "lib/capistrano/templates/#{from}-#{fetch(:stage)}.rb",
-        "lib/capistrano/templates/#{from}.rb.erb",
-        "lib/capistrano/templates/#{from}.rb",
-        "lib/capistrano/templates/#{from}.erb",
+        File.join('lib','capistrano','templates',"#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
+        File.join('lib','capistrano','templates',"#{from}-#{role.hostname}.rb"),
+        File.join('lib','capistrano','templates',"#{from}-#{fetch(:stage)}.rb"),
+        File.join('lib','capistrano','templates',"#{from}.rb.erb"),
+        File.join('lib','capistrano','templates',"#{from}.rb"),
+        File.join('lib','capistrano','templates',"#{from}.erb"),
         File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
         File.expand_path("../../templates/#{from}.erb", __FILE__)
     ].each do |path|
