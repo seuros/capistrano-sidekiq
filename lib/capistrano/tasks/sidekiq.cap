@@ -127,7 +127,7 @@ namespace :sidekiq do
   task :start do
     on roles fetch(:sidekiq_role) do
       for_each_process do |pid_file, idx|
-        start_sidekiq(pid_file, idx)
+        start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
       end
     end
   end

@@ -43,6 +43,7 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.2.6: sidekiq:start check if sidekiq is running
 - 0.2.5: bug fixes
 - 0.2.4: Fast deploy with :sidekiq_run_in_background
 - 0.2.3: Added monit tasks (alpha)
