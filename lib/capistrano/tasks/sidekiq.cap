@@ -9,8 +9,8 @@ namespace :load do
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
     # Rbenv and RVM integration
-    set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
-    set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
+    set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
+    set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
   end
 
 end
@@ -22,7 +22,7 @@ namespace :deploy do
 end
 
 namespace :sidekiq do
-  def for_each_process(reverse=false, &block)
+  def for_each_process(reverse = false, &block)
     pids = processes_pids
     pids.reverse! if reverse
     pids.each_with_index do |pid_file, idx|
@@ -52,16 +52,18 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    if fetch(:sidekiq_use_signals)
-      background "kill -TERM `cat #{pid_file}`"
-    elsif fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
+      if fetch(:sidekiq_use_signals)
+        background "kill -TERM `cat #{pid_file}`"
+      else
+        background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      end
     else
       execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     end
   end
 
-  def quit_sidekiq(pid_file)
+  def quiet_sidekiq(pid_file)
     if fetch(:sidekiq_use_signals)
       background "kill -USR1 `cat #{pid_file}`"
     else
@@ -85,10 +87,10 @@ namespace :sidekiq do
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
     if defined?(JRUBY_VERSION)
-      args.push ">/dev/null 2>&1 &"
+      args.push '>/dev/null 2>&1 &'
       warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
     else
-      args.push "--daemon"
+      args.push '--daemon'
     end
 
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
@@ -108,10 +110,10 @@ namespace :sidekiq do
   desc 'Quiet sidekiq (stop processing new tasks)'
   task :quiet do
     on roles fetch(:sidekiq_role) do
-      if test("[ -d #{current_path} ]")   #fixes #11
+      if test("[ -d #{current_path} ]") # fixes #11
         for_each_process(true) do |pid_file, idx|
           if pid_process_exists?(pid_file)
-            quit_sidekiq(pid_file)
+            quiet_sidekiq(pid_file)
           end
         end
       end
@@ -156,7 +158,7 @@ namespace :sidekiq do
     end
   end
 
-  #delete any pid file not in use
+  # Delete any pid file not in use
   task :cleanup do
     on roles fetch(:sidekiq_role) do
       for_each_process do |pid_file, idx|
@@ -167,7 +169,7 @@ namespace :sidekiq do
     end
   end
 
-  #TODO : Don't start if all proccess are off, raise warning.
+  # TODO : Don't start if all proccess are off, raise warning.
   desc 'Respawn missing sidekiq proccesses'
   task :respawn do
     invoke 'sidekiq:cleanup'
@@ -180,17 +182,16 @@ namespace :sidekiq do
     end
   end
 
-
   def template_sidekiq(from, to, role)
     [
-        File.join('lib','capistrano','templates',"#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
-        File.join('lib','capistrano','templates',"#{from}-#{role.hostname}.rb"),
-        File.join('lib','capistrano','templates',"#{from}-#{fetch(:stage)}.rb"),
-        File.join('lib','capistrano','templates',"#{from}.rb.erb"),
-        File.join('lib','capistrano','templates',"#{from}.rb"),
-        File.join('lib','capistrano','templates',"#{from}.erb"),
-        File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
-        File.expand_path("../../templates/#{from}.erb", __FILE__)
+      File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
+      File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.rb"),
+      File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.rb"),
+      File.join('lib', 'capistrano', 'templates', "#{from}.rb.erb"),
+      File.join('lib', 'capistrano', 'templates', "#{from}.rb"),
+      File.join('lib', 'capistrano', 'templates', "#{from}.erb"),
+      File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
+      File.expand_path("../../templates/#{from}.erb", __FILE__)
     ].each do |path|
       if File.file?(path)
         erb = File.read(path)

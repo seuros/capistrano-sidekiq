@@ -17,7 +17,7 @@ Capistrano::Configuration.instance.load do
 
   if fetch(:sidekiq_default_hooks)
     before 'deploy:update_code', 'sidekiq:quiet'
-    after 'deploy:stop',    'sidekiq:stop'
+    after 'deploy:stop', 'sidekiq:stop'
     after 'deploy:start', 'sidekiq:start'
     before 'deploy:restart', 'sidekiq:restart'
   end
@@ -25,10 +25,10 @@ Capistrano::Configuration.instance.load do
   namespace :sidekiq do
     def for_each_process(&block)
       fetch(:sidekiq_processes).times do |idx|
-        pid_file = if idx.zero? && fetch(:sidekiq_processes) <= 1
-          fetch(:sidekiq_pid)
+        if idx.zero? && fetch(:sidekiq_processes) <= 1
+          pid_file = fetch(:sidekiq_pid)
         else
-          fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+          pid_file = fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
         end
         yield(pid_file, idx)
       end
@@ -57,32 +57,32 @@ Capistrano::Configuration.instance.load do
         args.push '--daemon'
       end
 
-      run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", :pty => false
+      run "cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ", pty: false
     end
 
     desc 'Quiet sidekiq (stop accepting new work)'
-    task :quiet, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+    task :quiet, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
       for_each_process do |pid_file, idx|
         quiet_process(pid_file, idx)
       end
     end
 
     desc 'Stop sidekiq'
-    task :stop, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+    task :stop, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
       for_each_process do |pid_file, idx|
         stop_process(pid_file, idx)
       end
     end
 
     desc 'Start sidekiq'
-    task :start, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+    task :start, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
       for_each_process do |pid_file, idx|
         start_process(pid_file, idx)
       end
     end
 
     desc 'Rolling-restart sidekiq'
-    task :rolling_restart, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+    task :rolling_restart, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
       for_each_process do |pid_file, idx|
         stop_process(pid_file, idx)
         start_process(pid_file, idx)
@@ -90,7 +90,7 @@ Capistrano::Configuration.instance.load do
     end
 
     desc 'Restart sidekiq'
-    task :restart, :roles => lambda { fetch(:sidekiq_role) }, :on_no_matching_servers => :continue do
+    task :restart, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
       stop
       start
     end

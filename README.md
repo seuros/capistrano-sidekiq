@@ -10,7 +10,7 @@ Add this line to your application's Gemfile:
 
 or:
 
-    gem 'capistrano-sidekiq'
+    gem 'capistrano-sidekiq' , group: :development
 
 And then execute:
 
@@ -43,6 +43,7 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.2.7: Signal usage @penso
 - 0.2.6: sidekiq:start check if sidekiq is running
 - 0.2.5: bug fixes
 - 0.2.4: Fast deploy with :sidekiq_run_in_background
@@ -52,6 +53,7 @@ Configurable options, shown here with defaults:
 ## Contributors
 
 - [Jérémy Lecour] (https://github.com/jlecour)
+- [Fabien Penso] (https://github.com/penso)
 
 ## Contributing
 
