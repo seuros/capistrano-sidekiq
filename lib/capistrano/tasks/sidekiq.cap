@@ -52,7 +52,9 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    if  fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
+    if fetch(:sidekiq_use_signals)
+      background "kill -TERM `cat #{pid_file}`"
+    elsif fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     else
       execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
@@ -60,11 +62,15 @@ namespace :sidekiq do
   end
 
   def quit_sidekiq(pid_file)
-    begin
-      execute :bundle, :exec, :sidekiqctl, 'quiet', "#{pid_file}"
-    rescue SSHKit::Command::Failed
-      # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
-      warn 'sidekiqctl not found (ignore if this is the first deploy)'
+    if fetch(:sidekiq_use_signals)
+      background "kill -USR1 `cat #{pid_file}`"
+    else
+      begin
+        execute :bundle, :exec, :sidekiqctl, 'quiet', "#{pid_file}"
+      rescue SSHKit::Command::Failed
+        # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
+        warn 'sidekiqctl not found (ignore if this is the first deploy)'
+      end
     end
   end
 
@@ -85,7 +91,7 @@ namespace :sidekiq do
       args.push "--daemon"
     end
 
-    if  fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
+    if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :bundle, :exec, :sidekiq, args.compact.join(' ')
     else
       execute :bundle, :exec, :sidekiq, args.compact.join(' ')
