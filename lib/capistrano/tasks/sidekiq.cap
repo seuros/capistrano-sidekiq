@@ -84,6 +84,9 @@ namespace :sidekiq do
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
+    args.push "--queue #{fetch(:sidekiq_queue)}" if fetch(:sidekiq_queue)
+    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+    # use sidekiq_options for special options
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
     if defined?(JRUBY_VERSION)
