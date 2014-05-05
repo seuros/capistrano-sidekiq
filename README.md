@@ -36,6 +36,8 @@ Configurable options, shown here with defaults:
     :sidekiq_options =>  nil
     :sidekiq_require => nil
     :sidekiq_tag => nil
+    :sidekiq_config => nil
+    :sidekiq_queue => nil
     :sidekiq_timeout =>  10
     :sidekiq_role =>  :app
     :sidekiq_processes =>  1
@@ -43,6 +45,7 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.2.8: Added :sidekiq_queue & :sidekiq_config
 - 0.2.7: Signal usage @penso
 - 0.2.6: sidekiq:start check if sidekiq is running
 - 0.2.5: bug fixes
