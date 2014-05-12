@@ -60,6 +60,7 @@ Configurable options, shown here with defaults:
 
 - [Jérémy Lecour] (https://github.com/jlecour)
 - [Fabien Penso] (https://github.com/penso)
+- [Alex Dunae] (https://github.com/alexdunae)
 
 ## Contributing
 
