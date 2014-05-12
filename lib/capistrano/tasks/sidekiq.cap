@@ -126,9 +126,11 @@ namespace :sidekiq do
   desc 'Stop sidekiq'
   task :stop do
     on roles fetch(:sidekiq_role) do
-      for_each_process(true) do |pid_file, idx|
-        if pid_process_exists?(pid_file)
-          stop_sidekiq(pid_file)
+      if test("[ -d #{current_path} ]")
+        for_each_process(true) do |pid_file, idx|
+          if pid_process_exists?(pid_file)
+            stop_sidekiq(pid_file)
+          end
         end
       end
     end
