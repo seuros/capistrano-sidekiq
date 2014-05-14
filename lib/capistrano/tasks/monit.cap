@@ -2,6 +2,7 @@ namespace :load do
   task :defaults do
     set :sidekiq_monit_conf_dir, -> { '/etc/monit/conf.d' }
     set :monit_bin, -> { '/usr/bin/monit' }
+    set :sidekiq_processes, -> { 1 }
   end
 end
 
@@ -20,35 +21,45 @@ namespace :sidekiq do
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
       on roles(fetch(:sidekiq_role)) do
-        sudo "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(index)}"
+        fetch(:sidekiq_processes).times do |idx|
+          sudo "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+        end
       end
     end
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
       on roles(fetch(:sidekiq_role)) do
-        sudo "#{fetch(:monit_bin)}  unmonitor #{sidekiq_service_name(index)}"
+        fetch(:sidekiq_processes).times do |idx|
+          sudo "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
+        end
       end
     end
 
     desc 'Disable Sidekiq monit-service'
     task :start do
       on roles(fetch(:sidekiq_role)) do
-        sudo "#{fetch(:monit_bin)}  start #{sidekiq_service_name(index)}"
+        fetch(:sidekiq_processes).times do |idx|
+          sudo "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
+        end
       end
     end
 
     desc 'Disable Sidekiq monit-service'
     task :stop do
       on roles(fetch(:sidekiq_role)) do
-        sudo "#{fetch(:monit_bin)}  stop #{sidekiq_service_name(index)}"
+        fetch(:sidekiq_processes).times do |idx|
+          sudo "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
+        end
       end
     end
 
     desc 'Disable Sidekiq monit-service'
     task :restart do
       on roles(fetch(:sidekiq_role)) do
-        sudo "#{fetch(:monit_bin)}  restart #{sidekiq_service_name(index)}"
+        fetch(:sidekiq_processes).times do |idx|
+          sudo "#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
+        end
       end
     end
 
