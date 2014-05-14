@@ -48,6 +48,8 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.3.0: Fix monit task @andreygerasimchuk
+- 0.2.9: Check if current directory exist @alexdunae
 - 0.2.8: Added :sidekiq_queue & :sidekiq_config
 - 0.2.7: Signal usage @penso
 - 0.2.6: sidekiq:start check if sidekiq is running
@@ -61,6 +63,7 @@ Configurable options, shown here with defaults:
 - [Jérémy Lecour] (https://github.com/jlecour)
 - [Fabien Penso] (https://github.com/penso)
 - [Alex Dunae] (https://github.com/alexdunae)
+- [andreygerasimchuk] (https://github.com/andreygerasimchuk)
 
 ## Contributing
 
