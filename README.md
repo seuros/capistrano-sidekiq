@@ -44,10 +44,12 @@ Configurable options, shown here with defaults:
     :sidekiq_timeout =>  10
     :sidekiq_role =>  :app
     :sidekiq_processes =>  1
+    :sidekiq_concurrency => nil
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"  # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.3.1: Fix logs @rottman, add concurrency option support
 - 0.3.0: Fix monit task @andreygerasimchuk
 - 0.2.9: Check if current directory exist @alexdunae
 - 0.2.8: Added :sidekiq_queue & :sidekiq_config
