@@ -12,12 +12,16 @@ namespace :load do
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
   end
-
 end
 
-namespace :deploy do
-  before :starting, :check_sidekiq_hooks do
-    invoke 'sidekiq:add_default_hooks' if fetch(:sidekiq_default_hooks)
+if fetch(:sidekiq_default_hooks)
+  namespace :deploy do
+    before :starting, :check_sidekiq_hooks do
+      invoke 'sidekiq:add_default_hooks'
+    end
+    after :restart, :restart_sidekiq do
+      invoke 'sidekiq:restart'
+    end
   end
 end
 

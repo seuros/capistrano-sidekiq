@@ -49,6 +49,8 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 ## Changelog
+- 0.3.3: sidekiq:restart after deploy:restart added to default hooks
+- 0.3.2: :sidekiq_queue accept an array 
 - 0.3.1: Fix logs @rottman, add concurrency option support @ungsophy
 - 0.3.0: Fix monit task @andreygerasimchuk
 - 0.2.9: Check if current directory exist @alexdunae
