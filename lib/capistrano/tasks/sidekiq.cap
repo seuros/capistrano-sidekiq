@@ -84,7 +84,9 @@ namespace :sidekiq do
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    args.push "--queue #{fetch(:sidekiq_queue)}" if fetch(:sidekiq_queue)
+    Array(fetch(:sidekiq_queue)).each do |queue|
+      args.push "--queue #{queue}"
+    end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     # use sidekiq_options for special options
@@ -190,14 +192,14 @@ namespace :sidekiq do
 
   def template_sidekiq(from, to, role)
     [
-      File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
-      File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.rb"),
-      File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.rb"),
-      File.join('lib', 'capistrano', 'templates', "#{from}.rb.erb"),
-      File.join('lib', 'capistrano', 'templates', "#{from}.rb"),
-      File.join('lib', 'capistrano', 'templates', "#{from}.erb"),
-      File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
-      File.expand_path("../../templates/#{from}.erb", __FILE__)
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.rb.erb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.erb"),
+        File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
+        File.expand_path("../../templates/#{from}.erb", __FILE__)
     ].each do |path|
       if File.file?(path)
         erb = File.read(path)
