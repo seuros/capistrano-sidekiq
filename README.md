@@ -48,6 +48,11 @@ Configurable options, shown here with defaults:
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"  # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
+
+There is a know bug that prevent sidekiq from starting when pty is true
+```ruby
+set :pty,  false
+```
 ## Changelog
 - 0.3.3: sidekiq:restart after deploy:restart added to default hooks
 - 0.3.2: :sidekiq_queue accept an array 
