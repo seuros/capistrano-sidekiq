@@ -54,6 +54,7 @@ There is a know bug that prevent sidekiq from starting when pty is true
 set :pty,  false
 ```
 ## Changelog
+- 0.3.5: Added :sidekiq_tag for capistrano2 @OscarBarrett
 - 0.3.3: sidekiq:restart after deploy:restart added to default hooks
 - 0.3.2: :sidekiq_queue accept an array 
 - 0.3.1: Fix logs @rottman, add concurrency option support @ungsophy
@@ -73,6 +74,7 @@ set :pty,  false
 - [Fabien Penso] (https://github.com/penso)
 - [Alex Dunae] (https://github.com/alexdunae)
 - [andreygerasimchuk] (https://github.com/andreygerasimchuk)
+- [Oscar Barrett] (https://github.com/OscarBarrett)
 
 ## Contributing
 
