@@ -47,11 +47,11 @@ namespace :sidekiq do
   end
 
   def pid_process_exists?(pid_file)
-    pid_file_exists?(pid_file) and test("kill -0 $( cat #{pid_file} )")
+    pid_file_exists?(pid_file) and test(*("kill -0 $( cat #{pid_file} )").split(' '))
   end
 
   def pid_file_exists?(pid_file)
-    test("[ -f #{pid_file} ]")
+    test(*("[ -f #{pid_file} ]").split(' '))
   end
 
   def stop_sidekiq(pid_file)
