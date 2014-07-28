@@ -4,6 +4,7 @@ Capistrano::Configuration.instance.load do
 
   _cset(:sidekiq_pid) { File.join(shared_path, 'pids', 'sidekiq.pid') }
   _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, 'production')) }
+  _cset(:sidekiq_tag) { nil }
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
 
   _cset(:sidekiq_options) { nil }
