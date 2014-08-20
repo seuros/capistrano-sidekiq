@@ -47,7 +47,7 @@ Capistrano::Configuration.instance.load do
       args.push "--index #{idx}"
       args.push "--pidfile #{pid_file}"
       args.push "--environment #{fetch(:sidekiq_env)}"
-      args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
+      args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag, nil)
       args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
       args.push fetch(:sidekiq_options)
 
