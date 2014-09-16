@@ -51,7 +51,7 @@ Capistrano::Configuration.instance.load do
                       end
 
       sidekiq_roles.to_ary.each do |sidekiq_role|
-        puts "executing on ##{ sidekiq_role }" if sidekiq_roles.many?
+        puts "executing on ##{ sidekiq_role }" if sidekiq_roles.size > 1
         yield(sidekiq_role)
       end
     end
