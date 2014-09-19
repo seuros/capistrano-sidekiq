@@ -2,7 +2,7 @@
 <% processes_pids.each_with_index do |pid_file, idx| %>
 check process <%= sidekiq_service_name(idx) %>
   with pidfile "<%= pid_file %>"
-  start program = "/bin/su - <%= @role.user %> -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiq <% if fetch(:sidekiq_config) %> --config <%= fetch(:sidekiq_config) %> <% end %> --pidfile <%= pid_file %> --environment <%= fetch(:sidekiq_env) %> <% if fetch(:sidekiq_concurrency) %> --concurrency <%= fetch(:sidekiq_concurrency) %> <% end %> --logfile <%= fetch(:sidekiq_log) %> <% Array(fetch(:sidekiq_queue)).each do |queue| %> --queue <%= queue %> <% end %>'" with timeout 30 seconds
+  start program = "/bin/su - <%= @role.user %> -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiq <% if fetch(:sidekiq_config) %> --config <%= fetch(:sidekiq_config) %> <% end %> --index <%= idx %> --pidfile <%= pid_file %> --environment <%= fetch(:sidekiq_env) %> <% if fetch(:sidekiq_concurrency) %> --concurrency <%= fetch(:sidekiq_concurrency) %> <% end %> --logfile <%= fetch(:sidekiq_log) %> <% Array(fetch(:sidekiq_queue)).each do |queue| %> --queue <%= queue %> <% end %>'" with timeout 30 seconds
   stop program = "/bin/su - <%= @role.user %> -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiqctl stop <%= pid_file %>'" with timeout <%= fetch(:sidekiq_timeout).to_i + 10  %> seconds
   group <%= fetch(:sidekiq_monit_group, fetch(:application)) %>-sidekiq
 
