@@ -78,5 +78,29 @@ namespace :sidekiq do
       fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
     end
 
+    def sidekiq_config
+      if fetch(:sidekiq_config)
+        "--config #{fetch(:sidekiq_config)}"
+      end
+    end
+
+    def sidekiq_concurrency
+      if fetch(:sidekiq_concurrency)
+        "--concurrency #{fetch(:sidekiq_concurrency)}"
+      end
+    end
+
+    def sidekiq_queues
+      Array(fetch(:sidekiq_queue)).map do |queue|
+        "--queue #{queue}"
+      end.join(' ')
+    end
+
+    def sidekiq_logfile
+      if fetch(:sidekiq_log)
+        "--logfile #{fetch(:sidekiq_log)}"
+      end
+    end
+
   end
 end
