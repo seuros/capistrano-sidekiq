@@ -2,12 +2,24 @@ namespace :load do
   task :defaults do
     set :sidekiq_monit_conf_dir, -> { '/etc/monit/conf.d' }
     set :monit_bin, -> { '/usr/bin/monit' }
+    set :sidekiq_monit_default_hooks, -> { true }
   end
 end
 
+namespace :deploy do
+  before :starting, :check_sidekiq_monit_hooks do
+    invoke 'sidekiq:monit:add_default_hooks' if fetch(:sidekiq_monit_default_hooks)
+  end
+end
 
 namespace :sidekiq do
   namespace :monit do
+
+    task :add_default_hooks do
+      after 'deploy:check',       'sidekiq:monit:unmonitor'
+      after  'deploy:publishing', 'sidekiq:monit:monitor'
+    end
+
     desc 'Config Sidekiq monit-service'
     task :config do
       on roles(fetch(:sidekiq_role)) do |role|
@@ -63,7 +75,31 @@ namespace :sidekiq do
     end
 
     def sidekiq_service_name(index=nil)
-      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}") + index.to_s
+      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
+    end
+
+    def sidekiq_config
+      if fetch(:sidekiq_config)
+        "--config #{fetch(:sidekiq_config)}"
+      end
+    end
+
+    def sidekiq_concurrency
+      if fetch(:sidekiq_concurrency)
+        "--concurrency #{fetch(:sidekiq_concurrency)}"
+      end
+    end
+
+    def sidekiq_queues
+      Array(fetch(:sidekiq_queue)).map do |queue|
+        "--queue #{queue}"
+      end.join(' ')
+    end
+
+    def sidekiq_logfile
+      if fetch(:sidekiq_log)
+        "--logfile #{fetch(:sidekiq_log)}"
+      end
     end
 
   end
