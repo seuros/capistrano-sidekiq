@@ -49,7 +49,7 @@ namespace :sidekiq do
       end
     end
 
-    desc 'Disable Sidekiq monit-service'
+    desc 'Start Sidekiq monit-service'
     task :start do
       on roles(fetch(:sidekiq_role)) do
         fetch(:sidekiq_processes).times do |idx|
@@ -58,7 +58,7 @@ namespace :sidekiq do
       end
     end
 
-    desc 'Disable Sidekiq monit-service'
+    desc 'Stop Sidekiq monit-service'
     task :stop do
       on roles(fetch(:sidekiq_role)) do
         fetch(:sidekiq_processes).times do |idx|
@@ -67,7 +67,7 @@ namespace :sidekiq do
       end
     end
 
-    desc 'Disable Sidekiq monit-service'
+    desc 'Restart Sidekiq monit-service'
     task :restart do
       on roles(fetch(:sidekiq_role)) do
         fetch(:sidekiq_processes).times do |idx|
