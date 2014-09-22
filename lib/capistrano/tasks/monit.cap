@@ -8,7 +8,9 @@ end
 
 namespace :deploy do
   before :starting, :check_sidekiq_monit_hooks do
-    invoke 'sidekiq:monit:add_default_hooks' if fetch(:sidekiq_monit_default_hooks)
+    if fetch(:sidekiq_default_hooks) && fetch(:sidekiq_monit_default_hooks)
+      invoke 'sidekiq:monit:add_default_hooks'
+    end
   end
 end
 

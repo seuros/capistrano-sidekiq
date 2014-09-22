@@ -54,6 +54,9 @@ There is a know bug that prevent sidekiq from starting when pty is true
 set :pty,  false
 ```
 ## Changelog
+- 0.3.8:
+        * Update monit template: use su instead of sudo / permit all Sidekiq options @bensie
+        * Unmonitor monit while deploy @Saicheg
 - 0.3.7:
         * fix capistrano2 task @tribble
         * Run Sidekiq as daemon from Monit @dpaluy
