@@ -54,6 +54,7 @@ There is a known bug that prevents sidekiq from starting when pty is true
 set :pty,  false
 ```
 ## Changelog
+- 0.3.9: Restore daemon flag from Monit template
 - 0.3.8:
         * Update monit template: use su instead of sudo / permit all Sidekiq options @bensie
         * Unmonitor monit while deploy @Saicheg
