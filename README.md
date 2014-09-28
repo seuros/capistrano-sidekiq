@@ -49,7 +49,7 @@ Configurable options, shown here with defaults:
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 
-There is a know bug that prevent sidekiq from starting when pty is true
+There is a known bug that prevents sidekiq from starting when pty is true
 ```ruby
 set :pty,  false
 ```
