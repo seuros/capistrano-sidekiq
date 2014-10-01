@@ -85,15 +85,15 @@ namespace :sidekiq do
     args.push "--pidfile #{pid_file}"
     args.push "--environment #{fetch(:sidekiq_env)}"
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
-    args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
-    args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
+    args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require, nil)
+    args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag, nil)
+    Array(fetch(:sidekiq_queue, nil)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
-    args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
+    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config, nil)
+    args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency, nil)
     # use sidekiq_options for special options
-    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
+    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options, nil)
 
     if defined?(JRUBY_VERSION)
       args.push '>/dev/null 2>&1 &'
