@@ -50,6 +50,9 @@ Capistrano::Configuration.instance.load do
       args.push "--environment #{fetch(:sidekiq_env)}"
       args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
       args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
+      fetch(:sidekiq_queue).each do |queue|
+        args.push "--queue #{queue}"
+      end if fetch(:sidekiq_queue)
       args.push fetch(:sidekiq_options)
 
       if defined?(JRUBY_VERSION)
