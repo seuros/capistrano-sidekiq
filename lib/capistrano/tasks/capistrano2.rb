@@ -8,6 +8,7 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
 
   _cset(:sidekiq_options) { nil }
+  _cset(:sidekiq_queue) { nil }
 
   _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiq" }
   _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiqctl" }
