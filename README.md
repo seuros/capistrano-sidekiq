@@ -45,6 +45,7 @@ Configurable options, shown here with defaults:
     :sidekiq_role =>  :app
     :sidekiq_processes =>  1
     :sidekiq_concurrency => nil
+    :sidekiq_monit_templates_path => 'config/deploy/templates'
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"  # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
@@ -53,6 +54,16 @@ There is a known bug that prevents sidekiq from starting when pty is true
 ```ruby
 set :pty,  false
 ```
+
+## Customizing the monit sidekiq templates
+
+If you need change some config in redactor, you can
+
+```
+    bundle exec rails generate capistrano:sidekiq:monit:template
+
+```
+
 ## Changelog
 - 0.3.9: Restore daemon flag from Monit template
 - 0.3.8:
@@ -64,7 +75,7 @@ set :pty,  false
 - 0.3.5: Added :sidekiq_tag for capistrano2 @OscarBarrett
 - 0.3.4: fix bug in sidekiq:start for capistrano 2 task
 - 0.3.3: sidekiq:restart after deploy:restart added to default hooks
-- 0.3.2: :sidekiq_queue accept an array 
+- 0.3.2: :sidekiq_queue accept an array
 - 0.3.1: Fix logs @rottman, add concurrency option support @ungsophy
 - 0.3.0: Fix monit task @andreygerasimchuk
 - 0.2.9: Check if current directory exist @alexdunae
