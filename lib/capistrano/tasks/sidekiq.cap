@@ -11,6 +11,8 @@ namespace :load do
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
+
+    set :sidekiq_monit_templates_path, -> { 'config/deploy/templates' }
   end
 end
 
@@ -195,14 +197,16 @@ namespace :sidekiq do
 
   def template_sidekiq(from, to, role)
     [
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.rb.erb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.erb"),
-        File.expand_path("../../templates/#{from}.rb.erb", __FILE__),
-        File.expand_path("../../templates/#{from}.erb", __FILE__)
+        "#{fetch(:sidekiq_monit_templates_path)}/#{from}.erb",
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.conf.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.conf.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb.erb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb"),
+        File.join('lib', 'capistrano', 'templates', "#{from}.conf.erb"),
+        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.rb.erb", __FILE__),
+        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.erb", __FILE__)
     ].each do |path|
       if File.file?(path)
         erb = File.read(path)
