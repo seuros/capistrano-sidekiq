@@ -7,6 +7,7 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_tag) { nil }
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
 
+  _cset(:sidekiq_config) { "#{current_path}/config/sidekiq.yml" }
   _cset(:sidekiq_options) { nil }
 
   _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiq" }
@@ -50,6 +51,7 @@ Capistrano::Configuration.instance.load do
       args.push "--environment #{fetch(:sidekiq_env)}"
       args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
       args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
+      args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
       fetch(:sidekiq_queue).each do |queue|
         args.push "--queue #{queue}"
       end if fetch(:sidekiq_queue)
