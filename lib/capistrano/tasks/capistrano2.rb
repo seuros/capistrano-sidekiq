@@ -9,6 +9,7 @@ Capistrano::Configuration.instance.load do
 
   _cset(:sidekiq_config) { "#{current_path}/config/sidekiq.yml" }
   _cset(:sidekiq_options) { nil }
+  _cset(:sidekiq_queue) { nil }
 
   _cset(:sidekiq_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiq" }
   _cset(:sidekiqctl_cmd) { "#{fetch(:bundle_cmd, 'bundle')} exec sidekiqctl" }
