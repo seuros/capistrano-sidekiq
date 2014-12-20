@@ -9,11 +9,11 @@ Sidekiq integration for Capistrano
 
 Add this line to your application's Gemfile:
 
-    gem 'capistrano-sidekiq' , github: 'seuros/capistrano-sidekiq'
+    gem 'capistrano-sidekiq', github: 'seuros/capistrano-sidekiq'
 
 or:
 
-    gem 'capistrano-sidekiq' , group: :development
+    gem 'capistrano-sidekiq', group: :development
 
 And then execute:
 
@@ -32,21 +32,21 @@ And then execute:
 Configurable options, shown here with defaults:
 
 ```ruby
-    :sidekiq_default_hooks =>  true
-    :sidekiq_pid =>  File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
-    :sidekiq_env =>  fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
-    :sidekiq_log =>  File.join(shared_path, 'log', 'sidekiq.log')
-    :sidekiq_options =>  nil
+    :sidekiq_default_hooks => true
+    :sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+    :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
+    :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
+    :sidekiq_options => nil
     :sidekiq_require => nil
     :sidekiq_tag => nil
     :sidekiq_config => nil
     :sidekiq_queue => nil
-    :sidekiq_timeout =>  10
-    :sidekiq_role =>  :app
-    :sidekiq_processes =>  1
+    :sidekiq_timeout => 10
+    :sidekiq_role => :app
+    :sidekiq_processes => 1
     :sidekiq_concurrency => nil
     :sidekiq_monit_templates_path => 'config/deploy/templates'
-    :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"  # Only for capistrano2.5
+    :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 ```
 
