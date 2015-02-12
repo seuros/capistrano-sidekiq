@@ -28,6 +28,7 @@ namespace :sidekiq do
         @role = role
         template_sidekiq 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
         sudo "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
+        sudo "#{fetch(:monit_bin)} reload"
       end
     end
 
@@ -35,7 +36,12 @@ namespace :sidekiq do
     task :monitor do
       on roles(fetch(:sidekiq_role)) do
         fetch(:sidekiq_processes).times do |idx|
-          sudo "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+          begin
+            sudo "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+          rescue
+            invoke 'sidekiq:monit:config'
+            sudo "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+          end
         end
       end
     end
@@ -44,7 +50,11 @@ namespace :sidekiq do
     task :unmonitor do
       on roles(fetch(:sidekiq_role)) do
         fetch(:sidekiq_processes).times do |idx|
-          sudo "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
+          begin
+            sudo "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
+          rescue
+            # no worries here
+          end
         end
       end
     end
