@@ -182,8 +182,8 @@ namespace :sidekiq do
     end
   end
 
-  # TODO : Don't start if all proccess are off, raise warning.
-  desc 'Respawn missing sidekiq proccesses'
+  # TODO : Don't start if all processes are off, raise warning.
+  desc 'Respawn missing sidekiq processes'
   task :respawn do
     invoke 'sidekiq:cleanup'
     on roles fetch(:sidekiq_role) do
