@@ -27,7 +27,16 @@ namespace :sidekiq do
       on roles(fetch(:sidekiq_role)) do |role|
         @role = role
         template_sidekiq 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
-        sudo "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
+
+        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
+
+        # Try execute in case the deploy user doesn't have sudo to mv
+        begin
+          execute mv_command
+        rescue
+          sudo mv_command
+        end
+
         sudo "#{fetch(:monit_bin)} reload"
       end
     end
