@@ -8,6 +8,7 @@ namespace :load do
     set :sidekiq_timeout, -> { 10 }
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
+    set :sidekiq_options_per_process, -> { nil }
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
@@ -94,6 +95,9 @@ namespace :sidekiq do
     end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
+    if process_options = fetch(:sidekiq_options_per_process)
+      args.push process_options[idx]
+    end
     # use sidekiq_options for special options
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 

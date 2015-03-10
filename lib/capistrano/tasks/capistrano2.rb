@@ -17,6 +17,7 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_timeout) { 10 }
   _cset(:sidekiq_role) { :app }
   _cset(:sidekiq_processes) { 1 }
+  _cset(:sidekiq_options_per_process) { nil }
 
   if fetch(:sidekiq_default_hooks)
     before 'deploy:update_code', 'sidekiq:quiet'
@@ -56,6 +57,11 @@ Capistrano::Configuration.instance.load do
       fetch(:sidekiq_queue).each do |queue|
         args.push "--queue #{queue}"
       end if fetch(:sidekiq_queue)
+
+      if process_options = fetch(:sidekiq_options_per_process)
+        args.push process_options[idx]
+      end
+
       args.push fetch(:sidekiq_options)
 
       if defined?(JRUBY_VERSION)
