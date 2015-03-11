@@ -44,6 +44,7 @@ Configurable options, shown here with defaults:
     :sidekiq_timeout => 10
     :sidekiq_role => :app
     :sidekiq_processes => 1
+    :sidekiq_options_per_process => nil
     :sidekiq_concurrency => nil
     :sidekiq_monit_templates_path => 'config/deploy/templates'
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
@@ -53,6 +54,19 @@ Configurable options, shown here with defaults:
 There is a known bug that prevents sidekiq from starting when pty is true
 ```ruby
 set :pty,  false
+```
+
+## Multiple processes
+
+You can configure sidekiq to start with multiple processes. Just set the proper amount in `sidekiq_processes`.
+
+You can also customize the configuration for every process. If you want to do that, just set
+`sidekiq_options_per_process` with an array of the configuration options that you want in string format.
+This example should boot the first process with the queue `high` and the second one with the queues `default`
+and `low`:
+
+```ruby
+set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
 ## Customizing the monit sidekiq templates
