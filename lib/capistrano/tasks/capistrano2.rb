@@ -54,6 +54,7 @@ Capistrano::Configuration.instance.load do
       args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
       args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
       args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+      args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
       fetch(:sidekiq_queue).each do |queue|
         args.push "--queue #{queue}"
       end if fetch(:sidekiq_queue)
