@@ -79,6 +79,7 @@ If you need change some config in redactor, you can
 ```
 
 ## Changelog
+- 0.5.0: Multiple processes @mrsimo
 - 0.3.9: Restore daemon flag from Monit template
 - 0.3.8:
         * Update monit template: use su instead of sudo / permit all Sidekiq options @bensie
