@@ -69,6 +69,18 @@ and `low`:
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
+## Different number of processes per host
+
+You can configure how many processes you want to run on each host next way:
+
+```ruby
+set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_small_processes, 1
+set :sidekiq_big_processes, 4
+server 'example-small.com', roles: [:sidekiq_small]
+server 'example-big.com', roles: [:sidekiq_big]
+```
+
 ## Customizing the monit sidekiq templates
 
 If you need change some config in redactor, you can
