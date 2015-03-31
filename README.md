@@ -91,6 +91,7 @@ If you need change some config in redactor, you can
 ```
 
 ## Changelog
+- 0.5.3: Custom count of processes per each host
 - 0.5.0: Multiple processes @mrsimo
 - 0.3.9: Restore daemon flag from Monit template
 - 0.3.8:
@@ -120,6 +121,8 @@ If you need change some config in redactor, you can
 - [Fabien Penso] (https://github.com/penso)
 - [Alex Dunae] (https://github.com/alexdunae)
 - [andreygerasimchuk] (https://github.com/andreygerasimchuk)
+- [Saicheg] (https://github.com/Saicheg)
+- [Alex Yakubenko] (https://github.com/alexyakubenko)
 
 ## Contributing
 
