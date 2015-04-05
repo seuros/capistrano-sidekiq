@@ -40,12 +40,17 @@ namespace :sidekiq do
 
   def processes_pids
     pids = []
-    fetch(:sidekiq_processes).times do |idx|
-      pids.push (idx.zero? && fetch(:sidekiq_processes) <= 1) ?
-                    fetch(:sidekiq_pid) :
-                    fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
-
+    sidekiq_roles = Array(fetch(:sidekiq_role))
+    sidekiq_roles.each do |role|
+      next unless host.roles.include?(role)
+      processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
+      processes.times do |idx|
+        pids.push (idx.zero? && processes <= 1) ?
+                      fetch(:sidekiq_pid) :
+                      fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+      end
     end
+
     pids
   end
 
