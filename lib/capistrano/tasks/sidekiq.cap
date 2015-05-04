@@ -103,15 +103,16 @@ namespace :sidekiq do
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
     end
-    # use sidekiq_options for special options
-    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
-
+    
     if defined?(JRUBY_VERSION)
       args.push '>/dev/null 2>&1 &'
       warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
     else
       args.push '--daemon'
     end
+
+    # use sidekiq_options for special options
+    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :bundle, :exec, :sidekiq, args.compact.join(' ')
