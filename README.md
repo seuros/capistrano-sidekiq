@@ -81,6 +81,18 @@ server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
 
+## Different sidekiq config per host
+
+You can configure which config file you want to use on each host next way:
+
+```ruby
+set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_small_config, 'config/sidekiq-small.yml'
+set :sidekiq_big_config, 'config/sidekiq-big.yml'
+server 'example-small.com', roles: [:sidekiq_small]
+server 'example-big.com', roles: [:sidekiq_big]
+```
+
 ## Customizing the monit sidekiq templates
 
 If you need change some config in redactor, you can
