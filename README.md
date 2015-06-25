@@ -123,6 +123,7 @@ If you need change some config in redactor, you can
 - [andreygerasimchuk] (https://github.com/andreygerasimchuk)
 - [Saicheg] (https://github.com/Saicheg)
 - [Alex Yakubenko] (https://github.com/alexyakubenko)
+- [Robert Strobl] (https://github.com/rstrobl)
 
 ## Contributing
 
