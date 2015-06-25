@@ -17,7 +17,6 @@ namespace :load do
   end
 end
 
-
 namespace :deploy do
   before :starting, :check_sidekiq_hooks do
     invoke 'sidekiq:add_default_hooks' if fetch(:sidekiq_default_hooks)
@@ -204,25 +203,29 @@ namespace :sidekiq do
     end
   end
 
-  def template_sidekiq(from, to, role)
-    [
-        "#{fetch(:sidekiq_monit_templates_path)}/#{from}.erb",
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb.erb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.erb"),
-        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.rb.erb", __FILE__),
-        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.erb", __FILE__)
-    ].each do |path|
-      if File.file?(path)
-        erb = File.read(path)
-        upload! StringIO.new(ERB.new(erb).result(binding)), to
-        break
-      end
-    end
+  def upload_sidekiq_template(from, to, role)
+    template = sidekiq_template(from, role)
+    upload!(StringIO.new(ERB.new(template).result(binding)), to)
   end
 
+  def sidekiq_template(name, role)
+    local_template_directory = fetch(:sidekiq_monit_templates_path)
+
+    search_paths = [
+      "#{name}-#{role.hostname}-#{fetch(:stage)}.erb",
+      "#{name}-#{role.hostname}.erb",
+      "#{name}-#{fetch(:stage)}.erb",
+      "#{name}.erb"
+    ].map { |filename| File.join(local_template_directory, filename) }
+
+    global_search_path = File.expand_path(
+      File.join(*%w[.. .. .. generators capistrano sidekiq monit templates], "#{name}.conf.erb"),
+      __FILE__
+    )
+
+    search_paths << global_search_path
+
+    template_path = search_paths.detect { |path| File.file?(path) }
+    File.read(template_path)
+  end
 end

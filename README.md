@@ -130,6 +130,7 @@ set :sidekiq_monit_use_sudo, false
 - [andreygerasimchuk] (https://github.com/andreygerasimchuk)
 - [Saicheg] (https://github.com/Saicheg)
 - [Alex Yakubenko] (https://github.com/alexyakubenko)
+- [Robert Strobl] (https://github.com/rstrobl)
 
 ## Contributing
 

@@ -27,7 +27,7 @@ namespace :sidekiq do
     task :config do
       on roles(fetch(:sidekiq_role)) do |role|
         @role = role
-        template_sidekiq 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
+        upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
 
         mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
         sudo_if_needed mv_command
