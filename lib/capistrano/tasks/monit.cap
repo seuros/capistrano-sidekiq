@@ -33,6 +33,9 @@ namespace :sidekiq do
         sudo_if_needed mv_command
 
         sudo_if_needed "#{fetch(:monit_bin)} reload"
+        if fetch(:monit_reload_delay)
+          sleep fetch(:monit_reload_delay)
+        end
       end
     end
 
@@ -115,6 +118,21 @@ namespace :sidekiq do
     def sidekiq_logfile
       if fetch(:sidekiq_log)
         "--logfile #{fetch(:sidekiq_log)}"
+      end
+    end
+
+    def export_env_cmds
+      exports = []
+      if fetch(:default_env)
+        fetch(:default_env).each do |name,value| 
+          exports << "export #{name.upcase}=#{value}"
+        end
+      end
+
+      if exports.any?
+        exports.join(" && ")
+      else
+        "true"
       end
     end
 
