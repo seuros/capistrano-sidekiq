@@ -98,6 +98,7 @@ set :sidekiq_monit_use_sudo, false
 ```
 
 ## Changelog
+- 0.5.4: Add support for custom count of processes per host in monit task @okoriko
 - 0.5.3: Custom count of processes per each host
 - 0.5.0: Multiple processes @mrsimo
 - 0.3.9: Restore daemon flag from Monit template
@@ -131,6 +132,7 @@ set :sidekiq_monit_use_sudo, false
 - [Saicheg] (https://github.com/Saicheg)
 - [Alex Yakubenko] (https://github.com/alexyakubenko)
 - [Robert Strobl] (https://github.com/rstrobl)
+- [Eurico Doirado] (https://github.com/okoriko)
 
 ## Contributing
 
