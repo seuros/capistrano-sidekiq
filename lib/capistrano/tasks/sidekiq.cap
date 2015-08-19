@@ -1,5 +1,6 @@
 namespace :load do
   task :defaults do
+    set :sidekiq_user, nil
     set :sidekiq_default_hooks, -> { true }
 
     set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
@@ -129,10 +130,12 @@ namespace :sidekiq do
   desc 'Quiet sidekiq (stop processing new tasks)'
   task :quiet do
     on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]") # fixes #11
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            quiet_sidekiq(pid_file)
+      switch_user do
+        if test("[ -d #{release_path} ]") # fixes #11
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              quiet_sidekiq(pid_file)
+            end
           end
         end
       end
@@ -142,10 +145,12 @@ namespace :sidekiq do
   desc 'Stop sidekiq'
   task :stop do
     on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]")
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            stop_sidekiq(pid_file)
+      switch_user do
+        if test("[ -d #{release_path} ]")
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              stop_sidekiq(pid_file)
+            end
           end
         end
       end
@@ -155,8 +160,10 @@ namespace :sidekiq do
   desc 'Start sidekiq'
   task :start do
     on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+      switch_user do
+        for_each_process do |pid_file, idx|
+          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+        end
       end
     end
   end
@@ -170,11 +177,13 @@ namespace :sidekiq do
   desc 'Rolling-restart sidekiq'
   task :rolling_restart do
     on roles fetch(:sidekiq_role) do
-      for_each_process(true) do |pid_file, idx|
-        if pid_process_exists?(pid_file)
-          stop_sidekiq(pid_file)
+      switch_user do
+        for_each_process(true) do |pid_file, idx|
+          if pid_process_exists?(pid_file)
+            stop_sidekiq(pid_file)
+          end
+          start_sidekiq(pid_file, idx)
         end
-        start_sidekiq(pid_file, idx)
       end
     end
   end
@@ -182,9 +191,11 @@ namespace :sidekiq do
   # Delete any pid file not in use
   task :cleanup do
     on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        if pid_file_exists?(pid_file)
-          execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+      switch_user do
+        for_each_process do |pid_file, idx|
+          if pid_file_exists?(pid_file)
+            execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+          end
         end
       end
     end
@@ -195,12 +206,25 @@ namespace :sidekiq do
   task :respawn do
     invoke 'sidekiq:cleanup'
     on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        unless pid_file_exists?(pid_file)
-          start_sidekiq(pid_file, idx)
+      switch_user do
+        for_each_process do |pid_file, idx|
+          unless pid_file_exists?(pid_file)
+            start_sidekiq(pid_file, idx)
+          end
         end
       end
     end
+  end
+
+  def switch_user(&block)
+    su_user = fetch(:puma_user)
+    if su_user
+      as su_user do
+        yield
+      end
+    end
+
+    yield
   end
 
   def upload_sidekiq_template(from, to, role)
