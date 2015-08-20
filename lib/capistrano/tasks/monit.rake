@@ -1,9 +1,10 @@
 namespace :load do
   task :defaults do
-    set :sidekiq_monit_conf_dir, -> { '/etc/monit/conf.d' }
-    set :sidekiq_monit_use_sudo, -> { true }
-    set :monit_bin, -> { '/usr/bin/monit' }
-    set :sidekiq_monit_default_hooks, -> { true }
+    set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
+    set :sidekiq_monit_use_sudo, true
+    set :monit_bin, '/usr/bin/monit'
+    set :sidekiq_monit_default_hooks, true
+    set :sidekiq_monit_templates_path, 'config/deploy/templates'
   end
 end
 
@@ -38,15 +39,13 @@ namespace :sidekiq do
 
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
-      Array(fetch(:sidekiq_role)).each do |role|
-        on roles(role) do
-          sidekiq_processes(role).times do |idx|
-            begin
-              sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
-            rescue
-              invoke 'sidekiq:monit:config'
-              sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
-            end
+      on roles(fetch(:sidekiq_role)) do
+        fetch(:sidekiq_processes).times do |idx|
+          begin
+            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+          rescue
+            invoke 'sidekiq:monit:config'
+            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
           end
         end
       end
@@ -54,14 +53,12 @@ namespace :sidekiq do
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
-      Array(fetch(:sidekiq_role)).each do |role|
-        on roles(role) do
-          sidekiq_processes(role).times do |idx|
-            begin
-              sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
-            rescue
-              # no worries here
-            end
+      on roles(fetch(:sidekiq_role)) do
+        fetch(:sidekiq_processes).times do |idx|
+          begin
+            sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
+          rescue
+            # no worries here
           end
         end
       end
@@ -69,33 +66,27 @@ namespace :sidekiq do
 
     desc 'Start Sidekiq monit-service'
     task :start do
-      Array(fetch(:sidekiq_role)).each do |role|
-        on roles(role) do
-          sidekiq_processes(role).times do |idx|
-            sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
-          end
+      on roles(fetch(:sidekiq_role)) do
+        fetch(:sidekiq_processes).times do |idx|
+          sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
         end
       end
     end
 
     desc 'Stop Sidekiq monit-service'
     task :stop do
-      Array(fetch(:sidekiq_role)).each do |role|
-        on roles(role) do
-          sidekiq_processes(role).times do |idx|
-            sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
-          end
+      on roles(fetch(:sidekiq_role)) do
+        fetch(:sidekiq_processes).times do |idx|
+          sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
         end
       end
     end
 
     desc 'Restart Sidekiq monit-service'
     task :restart do
-      Array(fetch(:sidekiq_role)).each do |role|
-        on roles(role) do
-          sidekiq_processes(role).times do |idx|
-            sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
-          end
+      on roles(fetch(:sidekiq_role)) do
+        fetch(:sidekiq_processes).times do |idx|
+          sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
         end
       end
     end
@@ -134,10 +125,6 @@ namespace :sidekiq do
 
     def use_sudo?
       fetch(:sidekiq_monit_use_sudo)
-    end
-
-    def sidekiq_processes(role)
-      fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
     end
 
   end

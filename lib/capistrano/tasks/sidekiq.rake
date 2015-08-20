@@ -1,6 +1,5 @@
 namespace :load do
   task :defaults do
-    set :sidekiq_user, nil
     set :sidekiq_default_hooks, -> { true }
 
     set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
@@ -13,8 +12,6 @@ namespace :load do
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
-
-    set :sidekiq_monit_templates_path, -> { 'config/deploy/templates' }
   end
 end
 
