@@ -133,6 +133,7 @@ set :sidekiq_monit_use_sudo, false
 - [Alex Yakubenko] (https://github.com/alexyakubenko)
 - [Robert Strobl] (https://github.com/rstrobl)
 - [Eurico Doirado] (https://github.com/okoriko)
+- [Huang Bin](https://github.com/hbin)
 
 ## Contributing
 
