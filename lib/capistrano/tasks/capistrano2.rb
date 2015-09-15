@@ -26,6 +26,7 @@ Capistrano::Configuration.instance.load do
     after 'deploy:stop', 'sidekiq:stop'
     after 'deploy:start', 'sidekiq:start'
     before 'deploy:restart', 'sidekiq:restart'
+    after 'deploy:rollback', 'sidekiq:restart'
   end
 
   namespace :sidekiq do
