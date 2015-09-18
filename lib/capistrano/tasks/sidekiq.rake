@@ -14,6 +14,7 @@ namespace :load do
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     # Bundler integration
     set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
+    set :sidekiq_stop_tries, -> { 1 }
   end
 end
 
@@ -61,7 +62,7 @@ namespace :sidekiq do
     test(*("[ -f #{pid_file} ]").split(' '))
   end
 
-  def stop_sidekiq(pid_file)
+  def stop_sidekiq_internal(pid_file)
     if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       if fetch(:sidekiq_use_signals)
         background "kill -TERM `cat #{pid_file}`"
@@ -70,6 +71,17 @@ namespace :sidekiq do
       end
     else
       execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    end
+  end
+
+  def stop_sidekiq(pid_file)
+    fetch(:sidekiq_stop_tries).times do
+      if pid_process_exists?(pid_file)
+        stop_sidekiq_internal(pid_file)
+      else
+        break
+      end
+      sleep 1
     end
   end
 
@@ -147,9 +159,7 @@ namespace :sidekiq do
       switch_user do
         if test("[ -d #{release_path} ]")
           for_each_process(true) do |pid_file, idx|
-            if pid_process_exists?(pid_file)
-              stop_sidekiq(pid_file)
-            end
+            stop_sidekiq(pid_file)
           end
         end
       end
@@ -178,9 +188,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do
       switch_user do
         for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            stop_sidekiq(pid_file)
-          end
+          stop_sidekiq(pid_file)
           start_sidekiq(pid_file, idx)
         end
       end
