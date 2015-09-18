@@ -113,6 +113,12 @@ namespace :sidekiq do
       end.join(' ')
     end
 
+    def sidekiq_require
+      if fetch(:sidekiq_require)
+        "--require #{fetch(:sidekiq_require)}"
+      end
+    end
+
     def sidekiq_logfile
       if fetch(:sidekiq_log)
         "--logfile #{fetch(:sidekiq_log)}"
