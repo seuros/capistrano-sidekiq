@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email = ['terminale@gmail.com']
   spec.summary = %q{Sidekiq integration for Capistrano}
   spec.description = %q{Sidekiq integration for Capistrano}
-  spec.homepage = 'https://github.com/seuros/capistrano-sidekiq'
+  spec.homepage = 'https://github.com/felipejfc/capistrano-sidekiq'
   spec.license = 'LGPL-3.0'
 
   spec.required_ruby_version     = '>= 1.9.3'
