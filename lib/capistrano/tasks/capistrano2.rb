@@ -59,8 +59,12 @@ Capistrano::Configuration.instance.load do
     end
 
     def run_as(cmd)
+      opts = {
+        roles: sidekiq_role
+      }
       su_user = fetch(:sidekiq_user)
-      run cmd, roles: sidekiq_role, shell: "su - #{su_user}"
+      opts[:shell] = "su - #{su_user}" if su_user
+      run cmd, opts
     end
 
     def quiet_process(pid_file, idx, sidekiq_role)
