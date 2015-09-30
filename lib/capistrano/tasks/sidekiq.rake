@@ -9,6 +9,7 @@ namespace :load do
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
     set :sidekiq_options_per_process, -> { nil }
+    set :sidekiq_user, -> { nil }
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))

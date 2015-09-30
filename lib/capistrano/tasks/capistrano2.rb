@@ -21,6 +21,8 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_processes) { 1 }
   _cset(:sidekiq_options_per_process) { nil }
 
+  _cset(:sidekiq_user) { nil }
+
   if fetch(:sidekiq_default_hooks)
     before 'deploy:update_code', 'sidekiq:quiet'
     after 'deploy:stop', 'sidekiq:stop'
