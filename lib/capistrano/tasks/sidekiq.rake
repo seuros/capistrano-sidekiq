@@ -216,7 +216,7 @@ namespace :sidekiq do
   end
 
   def switch_user(&block)
-    su_user = fetch(:puma_user)
+    su_user = fetch(:sidekiq_user)
     if su_user
       as su_user do
         yield
