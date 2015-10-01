@@ -50,6 +50,7 @@ Configurable options, shown here with defaults:
     :sidekiq_monit_use_sudo => true
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
+    :sidekiq_user => nil #user to run sidekiq as
 ```
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.

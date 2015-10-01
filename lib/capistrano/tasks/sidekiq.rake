@@ -9,6 +9,7 @@ namespace :load do
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
     set :sidekiq_options_per_process, -> { nil }
+    set :sidekiq_user, -> { nil }
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
@@ -216,7 +217,7 @@ namespace :sidekiq do
   end
 
   def switch_user(&block)
-    su_user = fetch(:puma_user)
+    su_user = fetch(:sidekiq_user)
     if su_user
       as su_user do
         yield

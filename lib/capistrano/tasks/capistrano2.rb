@@ -21,6 +21,8 @@ Capistrano::Configuration.instance.load do
   _cset(:sidekiq_processes) { 1 }
   _cset(:sidekiq_options_per_process) { nil }
 
+  _cset(:sidekiq_user) { nil }
+
   if fetch(:sidekiq_default_hooks)
     before 'deploy:update_code', 'sidekiq:quiet'
     after 'deploy:stop', 'sidekiq:stop'
@@ -57,8 +59,12 @@ Capistrano::Configuration.instance.load do
     end
 
     def run_as(cmd)
+      opts = {
+        roles: sidekiq_role
+      }
       su_user = fetch(:sidekiq_user)
-      run cmd, roles: sidekiq_role, shell: "su - #{su_user}"
+      opts[:shell] = "su - #{su_user}" if su_user
+      run cmd, opts
     end
 
     def quiet_process(pid_file, idx, sidekiq_role)
@@ -95,7 +101,7 @@ Capistrano::Configuration.instance.load do
         args.push '--daemon'
       end
 
-      run_as "if [ -d #{current_path} ] && [ ! -f #{pid_file} ] || ! kill -0 `cat #{pid_file}` > /dev/null 2>&1; then cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ; else echo 'Sidekiq is already running'; fi", pty: false
+      run_as "if [ -d #{current_path} ] && [ ! -f #{pid_file} ] || ! kill -0 `cat #{pid_file}` > /dev/null 2>&1; then cd #{current_path} ; #{fetch(:sidekiq_cmd)} #{args.compact.join(' ')} ; else echo 'Sidekiq is already running'; fi"
     end
 
     desc 'Quiet sidekiq (stop accepting new work)'
