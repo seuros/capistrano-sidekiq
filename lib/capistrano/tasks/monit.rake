@@ -119,6 +119,10 @@ namespace :sidekiq do
       end
     end
 
+    def sidekiq_options_per_process
+      fetch(:sidekiq_options_per_process) || []
+    end
+
     def sudo_if_needed(command)
       send(use_sudo? ? :sudo : :execute, command)
     end
