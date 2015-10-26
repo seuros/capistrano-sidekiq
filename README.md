@@ -124,18 +124,6 @@ set :sidekiq_monit_use_sudo, false
 - 0.2.3: Added monit tasks (alpha)
 - 0.2.0: Added sidekiq:rolling_restart - @jlecour
 
-## Contributors
-
-- [Jérémy Lecour] (https://github.com/jlecour)
-- [Fabien Penso] (https://github.com/penso)
-- [Alex Dunae] (https://github.com/alexdunae)
-- [andreygerasimchuk] (https://github.com/andreygerasimchuk)
-- [Saicheg] (https://github.com/Saicheg)
-- [Alex Yakubenko] (https://github.com/alexyakubenko)
-- [Robert Strobl] (https://github.com/rstrobl)
-- [Eurico Doirado] (https://github.com/okoriko)
-- [Huang Bin](https://github.com/hbin)
-
 ## Contributing
 
 1. Fork it
