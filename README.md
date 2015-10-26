@@ -48,8 +48,6 @@ Configurable options, shown here with defaults:
     :sidekiq_concurrency => nil
     :sidekiq_monit_templates_path => 'config/deploy/templates'
     :sidekiq_monit_use_sudo => true
-    :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
-    :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
     :sidekiq_user => nil #user to run sidekiq as
 ```
 

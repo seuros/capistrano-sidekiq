@@ -2,13 +2,20 @@ namespace :load do
   task :defaults do
     set :sidekiq_default_hooks, -> { true }
 
-    set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
-    set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
-    set :sidekiq_timeout, -> { 10 }
     set :sidekiq_role, -> { :app }
+
+    set :sidekiq_pids_path, -> { File.join(shared_path, 'tmp', 'pids') }
+    set :sidekiq_logs_path, -> { File.join(shared_path, 'log') }
+    set :sidekiq_configs_path, -> { File.join(current_path, 'config') }
+
+    # Options for single config
+    set :sidekiq_pid, -> { File.join(fetch(:sidekiq_pids_path), 'sidekiq.pid') }
+    set :sidekiq_log, -> { File.join(fetch(:sidekiq_logs_path), 'sidekiq.log') }
+    set :sidekiq_timeout, -> { 10 }
     set :sidekiq_processes, -> { 1 }
     set :sidekiq_options_per_process, -> { nil }
+
     set :sidekiq_user, -> { nil }
     # Rbenv and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
