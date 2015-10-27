@@ -46,9 +46,7 @@ namespace :sidekiq do
       next unless host.roles.include?(role)
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       processes.times do |idx|
-        pids.push (idx.zero? && processes <= 1) ?
-                      fetch(:sidekiq_pid) :
-                      fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        pids.push fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
       end
     end
 
