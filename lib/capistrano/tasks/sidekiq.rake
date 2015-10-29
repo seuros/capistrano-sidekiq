@@ -121,7 +121,12 @@ namespace :sidekiq do
 
   def queue_for_host(host)
     sidekiq_roles = host.roles & fetch(:sidekiq_role)
-    fetch(:"#{ sidekiq_roles.first }_queue") || fetch(:sidekiq_queue)
+    queues = sidekiq_roles.map { |role| fetch(:"#{role}_queue") }.compact
+    if queues.empty?
+      fetch(:sidekiq_queue)
+    else
+      queues
+    end
   end
 
   task :add_default_hooks do
