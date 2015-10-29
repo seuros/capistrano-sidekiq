@@ -47,11 +47,13 @@ Configurable options, shown here with defaults:
     :sidekiq_options_per_process => nil
     :sidekiq_concurrency => nil
     :sidekiq_monit_templates_path => 'config/deploy/templates'
+    :sidekiq_monit_use_sudo => true
     :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
     :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
+    :sidekiq_user => nil #user to run sidekiq as
 ```
 
-There is a known bug that prevents sidekiq from starting when pty is true
+There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
 ```ruby
 set :pty,  false
 ```
@@ -90,7 +92,14 @@ If you need change some config in redactor, you can
 
 ```
 
+If your deploy user has no need in `sudo` for using monit, you can disable it as follows:
+
+```ruby
+set :sidekiq_monit_use_sudo, false
+```
+
 ## Changelog
+- 0.5.4: Add support for custom count of processes per host in monit task @okoriko
 - 0.5.3: Custom count of processes per each host
 - 0.5.0: Multiple processes @mrsimo
 - 0.3.9: Restore daemon flag from Monit template
@@ -114,15 +123,6 @@ If you need change some config in redactor, you can
 - 0.2.4: Fast deploy with :sidekiq_run_in_background
 - 0.2.3: Added monit tasks (alpha)
 - 0.2.0: Added sidekiq:rolling_restart - @jlecour
-
-## Contributors
-
-- [Jérémy Lecour] (https://github.com/jlecour)
-- [Fabien Penso] (https://github.com/penso)
-- [Alex Dunae] (https://github.com/alexdunae)
-- [andreygerasimchuk] (https://github.com/andreygerasimchuk)
-- [Saicheg] (https://github.com/Saicheg)
-- [Alex Yakubenko] (https://github.com/alexyakubenko)
 
 ## Contributing
 

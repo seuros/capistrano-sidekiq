@@ -9,14 +9,15 @@ namespace :load do
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
     set :sidekiq_options_per_process, -> { nil }
-    # Rbenv and RVM integration
+    set :sidekiq_user, -> { nil }
+    # Rbenv, Chruby, and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
-
-    set :sidekiq_monit_templates_path, -> { 'config/deploy/templates' }
+    set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
+    # Bundler integration
+    set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
   end
 end
-
 
 namespace :deploy do
   before :starting, :check_sidekiq_hooks do
@@ -45,9 +46,7 @@ namespace :sidekiq do
       next unless host.roles.include?(role)
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       processes.times do |idx|
-        pids.push (idx.zero? && processes <= 1) ?
-                      fetch(:sidekiq_pid) :
-                      fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        pids.push fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
       end
     end
 
@@ -67,10 +66,10 @@ namespace :sidekiq do
       if fetch(:sidekiq_use_signals)
         background "kill -TERM `cat #{pid_file}`"
       else
-        background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+        background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
       end
     else
-      execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     end
   end
 
@@ -79,7 +78,7 @@ namespace :sidekiq do
       background "kill -USR1 `cat #{pid_file}`"
     else
       begin
-        execute :bundle, :exec, :sidekiqctl, 'quiet', "#{pid_file}"
+        execute :sidekiqctl, 'quiet', "#{pid_file}"
       rescue SSHKit::Command::Failed
         # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
         warn 'sidekiqctl not found (ignore if this is the first deploy)'
@@ -114,9 +113,9 @@ namespace :sidekiq do
     end
 
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :bundle, :exec, :sidekiq, args.compact.join(' ')
+      background :sidekiq, args.compact.join(' ')
     else
-      execute :bundle, :exec, :sidekiq, args.compact.join(' ')
+      execute :sidekiq, args.compact.join(' ')
     end
   end
 
@@ -135,10 +134,12 @@ namespace :sidekiq do
   desc 'Quiet sidekiq (stop processing new tasks)'
   task :quiet do
     on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]") # fixes #11
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            quiet_sidekiq(pid_file)
+      switch_user do
+        if test("[ -d #{release_path} ]") # fixes #11
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              quiet_sidekiq(pid_file)
+            end
           end
         end
       end
@@ -148,10 +149,12 @@ namespace :sidekiq do
   desc 'Stop sidekiq'
   task :stop do
     on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]")
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            stop_sidekiq(pid_file)
+      switch_user do
+        if test("[ -d #{release_path} ]")
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              stop_sidekiq(pid_file)
+            end
           end
         end
       end
@@ -161,8 +164,11 @@ namespace :sidekiq do
   desc 'Start sidekiq'
   task :start do
     on roles fetch(:sidekiq_role) do |host|
-      for_each_process do |pid_file, idx|
-        start_sidekiq(pid_file, host, idx) unless pid_process_exists?(pid_file)
+      puts "host: #{host}"
+      switch_user do
+        for_each_process do |pid_file, idx|
+          start_sidekiq(pid_file, host, idx) unless pid_process_exists?(pid_file)
+        end
       end
     end
   end
@@ -176,11 +182,13 @@ namespace :sidekiq do
   desc 'Rolling-restart sidekiq'
   task :rolling_restart do
     on roles fetch(:sidekiq_role) do |host|
-      for_each_process(true) do |pid_file, idx|
-        if pid_process_exists?(pid_file)
-          stop_sidekiq(pid_file)
+      switch_user do
+        for_each_process(true) do |pid_file, idx|
+          if pid_process_exists?(pid_file)
+            stop_sidekiq(pid_file)
+          end
+          start_sidekiq(pid_file, host, idx)
         end
-        start_sidekiq(pid_file, host, idx)
       end
     end
   end
@@ -188,9 +196,11 @@ namespace :sidekiq do
   # Delete any pid file not in use
   task :cleanup do
     on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        if pid_file_exists?(pid_file)
-          execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+      switch_user do
+        for_each_process do |pid_file, idx|
+          if pid_file_exists?(pid_file)
+            execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+          end
         end
       end
     end
@@ -201,33 +211,50 @@ namespace :sidekiq do
   task :respawn do
     invoke 'sidekiq:cleanup'
     on roles fetch(:sidekiq_role) do |host|
-      for_each_process do |pid_file, idx|
-        unless pid_file_exists?(pid_file)
-          start_sidekiq(pid_file, host, idx)
+      switch_user do
+        for_each_process do |pid_file, idx|
+          unless pid_file_exists?(pid_file)
+            start_sidekiq(pid_file, host, idx)
+          end
         end
       end
     end
   end
 
-  def template_sidekiq(from, to, role)
-    [
-        "#{fetch(:sidekiq_monit_templates_path)}/#{from}.erb",
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{role.hostname}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}-#{fetch(:stage)}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb.erb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.rb"),
-        File.join('lib', 'capistrano', 'templates', "#{from}.conf.erb"),
-        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.rb.erb", __FILE__),
-        File.expand_path("../../../generators/capistrano/sidekiq/monit/templates/#{from}.conf.erb", __FILE__)
-    ].each do |path|
-      if File.file?(path)
-        erb = File.read(path)
-        upload! StringIO.new(ERB.new(erb).result(binding)), to
-        break
+  def switch_user(&block)
+    su_user = fetch(:sidekiq_user)
+    if su_user
+      as su_user do
+        yield
       end
     end
+
+    yield
   end
 
+  def upload_sidekiq_template(from, to, role)
+    template = sidekiq_template(from, role)
+    upload!(StringIO.new(ERB.new(template).result(binding)), to)
+  end
+
+  def sidekiq_template(name, role)
+    local_template_directory = fetch(:sidekiq_monit_templates_path)
+
+    search_paths = [
+      "#{name}-#{role.hostname}-#{fetch(:stage)}.erb",
+      "#{name}-#{role.hostname}.erb",
+      "#{name}-#{fetch(:stage)}.erb",
+      "#{name}.erb"
+    ].map { |filename| File.join(local_template_directory, filename) }
+
+    global_search_path = File.expand_path(
+      File.join(*%w[.. .. .. generators capistrano sidekiq monit templates], "#{name}.conf.erb"),
+      __FILE__
+    )
+
+    search_paths << global_search_path
+
+    template_path = search_paths.detect { |path| File.file?(path) }
+    File.read(template_path)
+  end
 end
