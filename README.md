@@ -83,6 +83,18 @@ server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
 
+## Different queues of processes per role (Support only Capistrano3)
+
+You can configure queues you want to run on each role next way:
+
+```ruby
+set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_small_queues, :small
+set :sidekiq_big_queues, :big
+server 'example-small.com', roles: [:sidekiq_small]
+server 'example-big.com', roles: [:sidekiq_big]
+```
+
 ## Customizing the monit sidekiq templates
 
 If you need change some config in redactor, you can
