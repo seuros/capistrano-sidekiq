@@ -71,6 +71,18 @@ and `low`:
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
+## Multiple configurations
+
+When deploying to multiple servers we can use a per server configuration file. To enable this a proc can be
+set as :sidekiq_config. For example:
+
+```ruby
+set :sidekiq_config, ->(idx) { "#{fetch :deploy_to}/current/config/sidekiq_#{idx}.yml" }
+
+```
+
+So the first server will use config file: `sikekiq_0.yml`, `sidekiq_1.yml` and so on.
+
 ## Different number of processes per host
 
 You can configure how many processes you want to run on each host next way:
