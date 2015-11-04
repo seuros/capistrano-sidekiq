@@ -86,7 +86,16 @@ namespace :sidekiq do
     end
   end
 
-  def start_sidekiq(pid_file, idx = 0)
+  def sidekiq_config_for(idx)
+    config = fetch(:sidekiq_config)
+    # Allow executing index specific configuration
+    if config.is_a? Proc
+      config = config.call(idx)
+    end
+    config
+  end
+
+  def build_sidekiq_cli_args(pid_file, idx=0)
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
@@ -97,7 +106,9 @@ namespace :sidekiq do
     Array(fetch(:sidekiq_queue)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+    if config = sidekiq_config_for(idx)
+      args.push "--config #{config}"
+    end
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
@@ -111,11 +122,14 @@ namespace :sidekiq do
     else
       args.push '--daemon'
     end
+  end
 
+  def start_sidekiq(pid_file, idx = 0)
+    args = build_sidekiq_cli_args(pid_file, idx).compact.join(' ')
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :sidekiq, args.compact.join(' ')
+      background :sidekiq, args
     else
-      execute :sidekiq, args.compact.join(' ')
+      execute :sidekiq, args
     end
   end
 
