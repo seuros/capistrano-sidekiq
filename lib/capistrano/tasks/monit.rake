@@ -119,6 +119,12 @@ namespace :sidekiq do
       end
     end
 
+    def sidekiq_require
+      if fetch(:sidekiq_require)
+        "--require #{fetch(:sidekiq_require)}"
+      end
+    end
+
     def sidekiq_options_per_process
       fetch(:sidekiq_options_per_process) || []
     end
