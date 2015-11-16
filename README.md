@@ -42,6 +42,7 @@ Configurable options, shown here with defaults:
     :sidekiq_config => nil
     :sidekiq_queue => nil
     :sidekiq_timeout => 10
+    :sidekiq_stop_tries => 1
     :sidekiq_role => :app
     :sidekiq_processes => 1
     :sidekiq_options_per_process => nil
