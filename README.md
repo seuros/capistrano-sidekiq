@@ -24,6 +24,7 @@ And then execute:
 ```ruby
     # Capfile
 
+    # The below two lines should below `require 'capistrano/rails'` or `require 'capistrano/bundler'` #126
     require 'capistrano/sidekiq'
     require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
 ```
