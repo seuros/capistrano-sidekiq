@@ -22,35 +22,34 @@ And then execute:
 
 ## Usage
 ```ruby
-    # Capfile
-
-    require 'capistrano/sidekiq'
-    require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
+# Capfile
+require 'capistrano/sidekiq'
+require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
 ```
 
 
 Configurable options, shown here with defaults:
 
 ```ruby
-    :sidekiq_default_hooks => true
-    :sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
-    :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
-    :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
-    :sidekiq_options => nil
-    :sidekiq_require => nil
-    :sidekiq_tag => nil
-    :sidekiq_config => nil
-    :sidekiq_queue => nil
-    :sidekiq_timeout => 10
-    :sidekiq_role => :app
-    :sidekiq_processes => 1
-    :sidekiq_options_per_process => nil
-    :sidekiq_concurrency => nil
-    :sidekiq_monit_templates_path => 'config/deploy/templates'
-    :sidekiq_monit_use_sudo => true
-    :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
-    :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
-    :sidekiq_user => nil #user to run sidekiq as
+:sidekiq_default_hooks => true
+:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+:sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
+:sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
+:sidekiq_options => nil
+:sidekiq_require => nil
+:sidekiq_tag => nil
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_queue => nil
+:sidekiq_timeout => 10
+:sidekiq_role => :app
+:sidekiq_processes => 1
+:sidekiq_options_per_process => nil
+:sidekiq_concurrency => nil
+:sidekiq_monit_templates_path => 'config/deploy/templates'
+:sidekiq_monit_use_sudo => true
+:sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
+:sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
+:sidekiq_user => nil #user to run sidekiq as
 ```
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
@@ -88,8 +87,7 @@ server 'example-big.com', roles: [:sidekiq_big]
 If you need change some config in redactor, you can
 
 ```
-    bundle exec rails generate capistrano:sidekiq:monit:template
-
+bundle exec rails generate capistrano:sidekiq:monit:template
 ```
 
 If your deploy user has no need in `sudo` for using monit, you can disable it as follows:
