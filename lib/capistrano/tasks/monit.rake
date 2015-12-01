@@ -1,6 +1,7 @@
 namespace :load do
   task :defaults do
     set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
+    set :sidekiq_monit_conf_file, "#{sidekiq_service_name}.conf"
     set :sidekiq_monit_use_sudo, true
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
@@ -30,7 +31,7 @@ namespace :sidekiq do
         @role = role
         upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
 
-        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
+        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{fetch(:sidekiq_monit_conf_file)}"
         sudo_if_needed mv_command
 
         sudo_if_needed "#{fetch(:monit_bin)} reload"
