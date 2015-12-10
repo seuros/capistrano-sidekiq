@@ -95,8 +95,11 @@ namespace :sidekiq do
       fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
     end
 
-    def sidekiq_config
-      if fetch(:sidekiq_config)
+    def sidekiq_config(index=nil)
+      if config = fetch(:sidekiq_config)
+        if config.is_a? Proc
+          config = config.call(index)
+        end
         "--config #{fetch(:sidekiq_config)}"
       end
     end
