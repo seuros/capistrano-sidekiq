@@ -100,7 +100,7 @@ namespace :sidekiq do
         if config.is_a? Proc
           config = config.call(index)
         end
-        "--config #{fetch(:sidekiq_config)}"
+        "--config #{config}"
       end
     end
 
