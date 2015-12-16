@@ -102,6 +102,8 @@ Capistrano::Configuration.instance.load do
 
     desc 'Quiet sidekiq (stop accepting new work)'
     task :quiet, roles: lambda { fetch(:sidekiq_role) }, on_no_matching_servers: :continue do
+      on_rollback { sidekiq.restart }
+
       for_each_role do |sidekiq_role|
         for_each_process(sidekiq_role) do |pid_file, idx|
           quiet_process(pid_file, idx, sidekiq_role)
