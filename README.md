@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_role => :app
@@ -50,6 +50,7 @@ Configurable options, shown here with defaults:
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 :sidekiq_user => nil #user to run sidekiq as
+:sidekiq_operation_concurrency => 0 # 0 means operation executes sequentially
 ```
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
