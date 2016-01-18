@@ -105,7 +105,7 @@ namespace :sidekiq do
     # use sidekiq_options for special options
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
-    if defined?(JRUBY_VERSION)
+    if !capture('ruby', '-e "puts defined?(JRUBY_VERSION)"').empty?
       args.push '>/dev/null 2>&1 &'
       warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
     else
