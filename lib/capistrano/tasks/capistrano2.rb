@@ -1,3 +1,6 @@
+require 'yaml'
+require 'erb'
+
 Capistrano::Configuration.instance.load do
 
   _cset(:sidekiq_default_hooks) { true }
@@ -34,7 +37,14 @@ Capistrano::Configuration.instance.load do
     def for_each_process(sidekiq_role, &block)
       sidekiq_processes = fetch(:"#{ sidekiq_role }_processes") rescue 1
       sidekiq_processes.times do |idx|
-        pid_file = fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        pid_file = fetch(:sidekiq_pid)
+        if !pid_file && fetch(:sidekiq_config)
+          config_file = fetch(:sidekiq_config)
+          conf = YAML.load(ERB.new(IO.read(config_file)).result)
+          pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile] || conf[:pidfile]
+        end
+
+        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid")
         yield(pid_file, idx)
       end
     end
