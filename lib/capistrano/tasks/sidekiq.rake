@@ -49,6 +49,7 @@ namespace :sidekiq do
       next unless host.roles.include?(role)
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       processes.times do |idx|
+        append_idx = true
         pid_file = fetch(:sidekiq_pid)
 
         if !pid_file && fetch(:sidekiq_config)
@@ -60,11 +61,13 @@ namespace :sidekiq do
             end
             pid_file ||= conf[:pidfile]
           end
+
+          append_idx = false if pid_file
         end
 
         pid_file ||= File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
 
-        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid")
+        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid") if append_idx
         pids.push pid_file
       end
     end

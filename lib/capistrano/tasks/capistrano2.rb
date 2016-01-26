@@ -37,6 +37,7 @@ Capistrano::Configuration.instance.load do
     def for_each_process(sidekiq_role, &block)
       sidekiq_processes = fetch(:"#{ sidekiq_role }_processes") rescue 1
       sidekiq_processes.times do |idx|
+        append_idx = true
         pid_file = fetch(:sidekiq_pid)
 
         if !pid_file && fetch(:sidekiq_config)
@@ -48,11 +49,13 @@ Capistrano::Configuration.instance.load do
             end
             pid_file ||= conf[:pidfile]
           end
+
+          append_idx = false if pid_file
         end
 
         pid_file ||= File.join(shared_path, 'pids', 'sidekiq.pid')
 
-        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid")
+        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid") if append_idx
         yield(pid_file, idx)
       end
     end
