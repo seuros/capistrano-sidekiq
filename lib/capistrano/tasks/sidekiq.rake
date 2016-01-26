@@ -47,7 +47,9 @@ namespace :sidekiq do
     sidekiq_roles = Array(fetch(:sidekiq_role))
     sidekiq_roles.each do |role|
       next unless host.roles.include?(role)
-      processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
+      processes = fetch(:"#{ role }_processes")
+      processes ||= fetch(:"sidekiq_#{ role }_processes") unless sidekiq_specific_role?(role)
+      processes ||= fetch(:sidekiq_processes)
       processes.times do |idx|
         append_idx = true
         pid_file = fetch(:sidekiq_pid)
@@ -248,12 +250,25 @@ namespace :sidekiq do
     end
   end
 
+  def sidekiq_specific_role?(role)
+    role.to_s =~ /^sidekiq_/
+  end
+
+  # Fetch a value for a given config, role, and idx
+  # Returns the most specific value it can find,
+  # falling back to less & less specific values
+  # until it ultimately returns a deafult value.
   def sidekiq_fetch(config_name, role, idx)
+    keys_to_check = []
+    if sidekiq_specific_role?(role)
+      keys_to_check << :"#{ role }_#{ config_name }"
+    else
+      keys_to_check << :"sidekiq_#{ role }_#{ config_name }"
+    end
+    keys_to_check << :"sidekiq_#{ config_name }"
+
     val = nil
-    [
-      :"#{ role }_#{ config_name }",
-      :"sidekiq_#{ config_name }"
-    ].each do |key|
+    keys_to_check.each do |key|
       val ||= case fetch(key)
       when Array
         fetch(key)[idx]
