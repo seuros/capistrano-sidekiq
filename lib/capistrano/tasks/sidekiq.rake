@@ -52,8 +52,8 @@ namespace :sidekiq do
         append_idx = true
         pid_file = fetch(:sidekiq_pid)
 
-        if !pid_file && sidekiq_fetch(:config, idx)
-          config_file = sidekiq_fetch(:config, idx)
+        if !pid_file && sidekiq_fetch(:config, role, idx)
+          config_file = sidekiq_fetch(:config, role, idx)
           conf = YAML.load(ERB.new(IO.read(config_file)).result)
           if conf
             if conf[fetch(:sidekiq_env).to_sym]
@@ -108,24 +108,24 @@ namespace :sidekiq do
     end
   end
 
-  def start_sidekiq(pid_file, idx = 0)
+  def start_sidekiq(pid_file, role, idx = 0)
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
     args.push "--environment #{fetch(:sidekiq_env)}"
-    args.push "--logfile #{sidekiq_fetch(:log, idx)}" if sidekiq_fetch(:log, idx)
-    args.push "--require #{sidekiq_fetch(:require, idx)}" if sidekiq_fetch(:require, idx)
-    args.push "--tag #{sidekiq_fetch(:tag, idx)}" if sidekiq_fetch(:tag, idx)
-    Array(sidekiq_fetch(:queue, idx)).each do |queue|
+    args.push "--logfile #{sidekiq_fetch(:log, role, idx)}" if sidekiq_fetch(:log, role, idx)
+    args.push "--require #{sidekiq_fetch(:require, role, idx)}" if sidekiq_fetch(:require, role, idx)
+    args.push "--tag #{sidekiq_fetch(:tag, role, idx)}" if sidekiq_fetch(:tag, role, idx)
+    Array(sidekiq_fetch(:queue, role, idx)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{sidekiq_fetch(:config, idx)}" if sidekiq_fetch(:config, idx)
-    args.push "--concurrency #{sidekiq_fetch(:concurrency, idx)}" if sidekiq_fetch(:concurrency, idx)
+    args.push "--config #{sidekiq_fetch(:config, role, idx)}" if sidekiq_fetch(:config, role, idx)
+    args.push "--concurrency #{sidekiq_fetch(:concurrency, role, idx)}" if sidekiq_fetch(:concurrency, role, idx)
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
     end
     # use sidekiq_options for special options
-    args.push sidekiq_fetch(:options, idx) if sidekiq_fetch(:options, idx)
+    args.push sidekiq_fetch(:options, role, idx) if sidekiq_fetch(:options, role, idx)
 
     if defined?(JRUBY_VERSION)
       args.push '>/dev/null 2>&1 &'
@@ -183,7 +183,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+          start_sidekiq(pid_file, role, idx) unless pid_process_exists?(pid_file)
         end
       end
     end
@@ -203,7 +203,7 @@ namespace :sidekiq do
           if pid_process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
-          start_sidekiq(pid_file, idx)
+          start_sidekiq(pid_file, role, idx)
         end
       end
     end
@@ -230,7 +230,7 @@ namespace :sidekiq do
       switch_user(role) do
         for_each_process do |pid_file, idx|
           unless pid_file_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
+            start_sidekiq(pid_file, role, idx)
           end
         end
       end
@@ -248,14 +248,20 @@ namespace :sidekiq do
     end
   end
 
-  def sidekiq_fetch(key, idx)
-    key = :"sidekiq_#{key}"
-    case fetch(key)
-    when Array
-      fetch(key)[idx]
-    else
-      fetch(key)
+  def sidekiq_fetch(config_name, role, idx)
+    val = nil
+    [
+      :"#{ role }_#{ config_name }",
+      :"sidekiq_#{ config_name }"
+    ].each do |key|
+      val ||= case fetch(key)
+      when Array
+        fetch(key)[idx]
+      else
+        fetch(key)
+      end
     end
+    val
   end
 
   def sidekiq_user(role)
