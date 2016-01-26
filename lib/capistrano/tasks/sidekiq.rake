@@ -52,8 +52,8 @@ namespace :sidekiq do
         append_idx = true
         pid_file = fetch(:sidekiq_pid)
 
-        if !pid_file && fetch(:sidekiq_config)
-          config_file = fetch(:sidekiq_config)
+        if !pid_file && sidekiq_fetch(:config, idx)
+          config_file = sidekiq_fetch(:config, idx)
           conf = YAML.load(ERB.new(IO.read(config_file)).result)
           if conf
             if conf[fetch(:sidekiq_env).to_sym]
@@ -113,19 +113,19 @@ namespace :sidekiq do
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
     args.push "--environment #{fetch(:sidekiq_env)}"
-    args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
-    args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
-    args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
+    args.push "--logfile #{sidekiq_fetch(:log, idx)}" if sidekiq_fetch(:log, idx)
+    args.push "--require #{sidekiq_fetch(:require, idx)}" if sidekiq_fetch(:require, idx)
+    args.push "--tag #{sidekiq_fetch(:tag, idx)}" if sidekiq_fetch(:tag, idx)
+    Array(sidekiq_fetch(:queue, idx)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
-    args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
+    args.push "--config #{sidekiq_fetch(:config, idx)}" if sidekiq_fetch(:config, idx)
+    args.push "--concurrency #{sidekiq_fetch(:concurrency, idx)}" if sidekiq_fetch(:concurrency, idx)
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
     end
     # use sidekiq_options for special options
-    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
+    args.push sidekiq_fetch(:options, idx) if sidekiq_fetch(:options, idx)
 
     if defined?(JRUBY_VERSION)
       args.push '>/dev/null 2>&1 &'
@@ -245,6 +245,16 @@ namespace :sidekiq do
       as su_user do
         block.call
       end
+    end
+  end
+
+  def sidekiq_fetch(key, idx)
+    key = :"sidekiq_#{key}"
+    case fetch(key)
+    when Array
+      fetch(key)[idx]
+    else
+      fetch(key)
     end
   end
 
