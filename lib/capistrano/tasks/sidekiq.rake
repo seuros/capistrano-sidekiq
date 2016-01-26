@@ -1,8 +1,11 @@
+require 'yaml'
+require 'erb'
+
 namespace :load do
   task :defaults do
     set :sidekiq_default_hooks, -> { true }
 
-    set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
+    set :sidekiq_pid, -> { nil }
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
     set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
     set :sidekiq_timeout, -> { 10 }
@@ -46,7 +49,23 @@ namespace :sidekiq do
       next unless host.roles.include?(role)
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       processes.times do |idx|
-        pids.push fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        pid_file = fetch(:sidekiq_pid)
+
+        if !pid_file && fetch(:sidekiq_config)
+          config_file = fetch(:sidekiq_config)
+          conf = YAML.load(ERB.new(IO.read(config_file)).result)
+          if conf
+            if conf[fetch(:sidekiq_env).to_sym]
+              pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile]
+            end
+            pid_file ||= conf[:pidfile]
+          end
+        end
+
+        pid_file ||= File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+
+        pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid")
+        pids.push pid_file
       end
     end
 

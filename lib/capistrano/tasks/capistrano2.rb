@@ -5,7 +5,7 @@ Capistrano::Configuration.instance.load do
 
   _cset(:sidekiq_default_hooks) { true }
 
-  _cset(:sidekiq_pid) { File.join(shared_path, 'pids', 'sidekiq.pid') }
+  _cset(:sidekiq_pid) { nil }
   _cset(:sidekiq_env) { fetch(:rack_env, fetch(:rails_env, 'production')) }
   _cset(:sidekiq_tag) { nil }
   _cset(:sidekiq_log) { File.join(shared_path, 'log', 'sidekiq.log') }
@@ -38,11 +38,19 @@ Capistrano::Configuration.instance.load do
       sidekiq_processes = fetch(:"#{ sidekiq_role }_processes") rescue 1
       sidekiq_processes.times do |idx|
         pid_file = fetch(:sidekiq_pid)
+
         if !pid_file && fetch(:sidekiq_config)
           config_file = fetch(:sidekiq_config)
           conf = YAML.load(ERB.new(IO.read(config_file)).result)
-          pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile] || conf[:pidfile]
+          if conf
+            if conf[fetch(:sidekiq_env).to_sym]
+              pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile]
+            end
+            pid_file ||= conf[:pidfile]
+          end
         end
+
+        pid_file ||= File.join(shared_path, 'pids', 'sidekiq.pid')
 
         pid_file = pid_file.gsub(/\.pid$/, "-#{idx}.pid")
         yield(pid_file, idx)
