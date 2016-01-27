@@ -44,14 +44,14 @@ Capistrano::Configuration.instance.load do
       end
       processes.times do |idx|
         append_idx = true
-        pid_file = fetch(:sidekiq_pid)
+        pid_file = sidekiq_fetch(:pid, sidekiq_role, idx)
 
         if !pid_file && sidekiq_fetch(:config, sidekiq_role, idx)
           config_file = sidekiq_fetch(:config, sidekiq_role, idx)
           conf = YAML.load(ERB.new(IO.read(config_file)).result)
           if conf
-            if conf[fetch(:sidekiq_env).to_sym]
-              pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile]
+            if conf[sidekiq_fetch(:env, sidekiq_role, idx).to_sym]
+              pid_file = conf[sidekiq_fetch(:env, sidekiq_role, idx).to_sym][:pidfile]
             end
             pid_file ||= conf[:pidfile]
           end
@@ -95,19 +95,19 @@ Capistrano::Configuration.instance.load do
     end
 
     def stop_process(pid_file, idx, sidekiq_role)
-      run_as "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} stop #{pid_file} #{fetch :sidekiq_timeout} ; else echo 'Sidekiq is not running'; fi"
+      run_as "if [ -d #{current_path} ] && [ -f #{pid_file} ] && kill -0 `cat #{pid_file}`> /dev/null 2>&1; then cd #{current_path} && #{fetch(:sidekiqctl_cmd)} stop #{pid_file} #{sidekiq_fetch(:timeout, sidekiq_role, idx)} ; else echo 'Sidekiq is not running'; fi"
     end
 
     def start_process(pid_file, idx, sidekiq_role)
       args = []
       args.push "--index #{idx}"
       args.push "--pidfile #{pid_file}"
-      args.push "--environment #{fetch(:sidekiq_env)}"
+      args.push "--environment #{sidekiq_fetch(:env, sidekiq_role, idx)}"
       args.push "--tag #{sidekiq_fetch(:tag, sidekiq_role, idx)}" if sidekiq_fetch(:tag, sidekiq_role, idx)
       args.push "--logfile #{sidekiq_fetch(:log, sidekiq_role, idx)}" if sidekiq_fetch(:log, sidekiq_role, idx)
       args.push "--config #{sidekiq_fetch(:config, sidekiq_role, idx)}" if sidekiq_fetch(:config, sidekiq_role, idx)
       args.push "--concurrency #{sidekiq_fetch(:concurrency, sidekiq_role, idx)}" if sidekiq_fetch(:concurrency, sidekiq_role, idx)
-      sidekiq_fetch_queue(sidekiq_role, idx).each do |queue|
+      Array(sidekiq_fetch_queue(sidekiq_role, idx)).each do |queue|
         args.push "--queue #{queue}"
       end
 
@@ -217,9 +217,9 @@ Capistrano::Configuration.instance.load do
         # If at least one of the queues is an Array of queues
         # we assume the intention is that this is an nested Array of Arrays
         if queues.detect{ |val| val.is_a?(Array) }
-          Array(queues[idx])
+          queues[idx]
         else
-          Array(queues)
+          queues
         end
       end
     end
