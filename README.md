@@ -31,25 +31,37 @@ require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano
 Configurable options, shown here with defaults:
 
 ```ruby
-:sidekiq_default_hooks => true
-:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+# Sidekiq options
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
+:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq-0.pid') # if you specify a pidfile in your sidekiq_config file that value will be used as the default.
 :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
-:sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
 :sidekiq_queue => nil
-:sidekiq_timeout => 10
+:sidekiq_concurrency => nil
+:sidekiq_options => nil
+
+:sidekiq_timeout => 10 # Used when stopping sidekiq
+
+# Capistrano options
+:sidekiq_default_hooks => true
 :sidekiq_role => :app
 :sidekiq_processes => 1
-:sidekiq_options_per_process => nil
-:sidekiq_concurrency => nil
+:sidekiq_user => nil #user to run sidekiq as
+:start_sidekiq_in_background => false
+:stop_sidekiq_in_background => false
+:sidekiq_run_in_background => false # like setting both :start_ and :stop_sidekiq_in_background to true
+:sidekiq_use_signals => false # if :stop_sidekiq_in_background is true, use signals for quite & stop
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_use_sudo => true
-:sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
-:sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
-:sidekiq_user => nil #user to run sidekiq as
+
+# Options only for Capistrano 2.5
+:sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq"
+:sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl"
+
+# Deprecated Sidekiq options
+:sidekiq_options_per_process => nil
 ```
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
@@ -59,32 +71,69 @@ set :pty,  false
 
 ## Multiple processes
 
-You can configure sidekiq to start with multiple processes. Just set the proper amount in `sidekiq_processes`.
+You can configure sidekiq to start with multiple processes. Just set the `sidekiq_processes` option.
 
-You can also customize the configuration for every process. If you want to do that, just set
-`sidekiq_options_per_process` with an array of the configuration options that you want in string format.
-This example should boot the first process with the queue `high` and the second one with the queues `default`
-and `low`:
+You can also customize the configuration for each process by giving your various sidekiq config options Array values.
 
 ```ruby
-set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
+set :sidekiq_processes,  2
+set :sidekiq_log, 'log/background.log'
+set :sidekiq_config, [
+                       'config/sidekiq/high.yml',
+                       'config/sidekiq/low.yml'
+                     ]
+set :sidekiq_queue,  [
+                       [:high],
+                       [:default, :low]
+                     ]
 ```
 
-## Different number of processes per host
+In this example the first process will start with the following options:
+* log: 'log/background.log'
+* config: 'config/sidekiq/high.yml'
+* queue: 'high'
 
-You can configure how many processes you want to run on each host next way:
+And the second sidekiq process will start with the following options:
+* log: 'log/background.log'
+* config: 'config/sidekiq/low.yml'
+* queue: 'low' AND 'default'
+
+## Different options per host
+
+You can configure different sidekiq options for different hosts using roles:
 
 ```ruby
-set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
-set :sidekiq_small_processes, 1
-set :sidekiq_big_processes, 4
-server 'example-small.com', roles: [:sidekiq_small]
-server 'example-big.com', roles: [:sidekiq_big]
+set :sidekiq_role, [:web, :sidekiq_worker]
+set :sidekiq_log, 'log/background.log'
+
+set :sidekiq_web_processes, 1
+set :sidekiq_web_config, 'config/sidekiq/web.yml'
+
+set :sidekiq_worker_processes, 2
+set :sidekiq_worker_config, [
+                              'config/sidekiq/worker_one.yml',
+                              'config/sidekiq/worker_two.yml'
+                            ]
+
+server 'web1.example.com', roles: [:web]
+server 'bg1.example.com',  roles: [:sidekiq_worker]
 ```
+
+In this example the web1 host will have one process with the following options:
+* log: 'log/background.log'
+* config: 'config/sidekiq/web.yml'
+
+The bg1 host will have two processes. The first will have the following options:
+* log: 'log/background.log'
+* config: 'config/sidekiq/worker_one.yml'
+
+The second sidekiq process on bg1 will start with the following options:
+* log: 'log/background.log'
+* config: 'config/sidekiq/worker_two.yml'
 
 ## Customizing the monit sidekiq templates
 
-If you need change some config in redactor, you can
+If you need to change some config in redactor, you can
 
 ```
 bundle exec rails generate capistrano:sidekiq:monit:template
