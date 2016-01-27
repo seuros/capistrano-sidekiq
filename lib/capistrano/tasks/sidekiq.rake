@@ -89,15 +89,15 @@ namespace :sidekiq do
     test(*("[ -f #{pid_file} ]").split(' '))
   end
 
-  def stop_sidekiq(pid_file)
+  def stop_sidekiq(pid_file, role, idx)
     if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      if fetch(:sidekiq_use_signals)
+      if sidekiq_fetch(:use_signals, role, idx)
         background "kill -TERM `cat #{pid_file}`"
       else
-        background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+        background :sidekiqctl, 'stop', "#{pid_file}", sidekiq_fetch(:timeout, role, idx)
       end
     else
-      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      execute :sidekiqctl, 'stop', "#{pid_file}", sidekiq_fetch(:timeout, role, idx)
     end
   end
 
@@ -176,7 +176,7 @@ namespace :sidekiq do
         if test("[ -d #{release_path} ]")
           for_each_process(true) do |pid_file, idx|
             if pid_process_exists?(pid_file)
-              stop_sidekiq(pid_file)
+              stop_sidekiq(pid_file, role, idx)
             end
           end
         end
