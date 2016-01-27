@@ -118,7 +118,7 @@ namespace :sidekiq do
     args.push "--logfile #{sidekiq_fetch(:log, role, idx)}" if sidekiq_fetch(:log, role, idx)
     args.push "--require #{sidekiq_fetch(:require, role, idx)}" if sidekiq_fetch(:require, role, idx)
     args.push "--tag #{sidekiq_fetch(:tag, role, idx)}" if sidekiq_fetch(:tag, role, idx)
-    Array(sidekiq_fetch(:queue, role, idx)).each do |queue|
+    sidekiq_fetch_queue(role, idx).each do |queue|
       args.push "--queue #{queue}"
     end
     args.push "--config #{sidekiq_fetch(:config, role, idx)}" if sidekiq_fetch(:config, role, idx)
@@ -250,15 +250,65 @@ namespace :sidekiq do
     end
   end
 
-  def sidekiq_specific_role?(role)
-    role.to_s =~ /^sidekiq_/
-  end
-
   # Fetch a value for a given config, role, and idx
   # Returns the most specific value it can find,
   # falling back to less & less specific values
   # until it ultimately returns a deafult value.
   def sidekiq_fetch(config_name, role, idx)
+    fetch_role_specific_values(config_name, role, idx) do |key, idx|
+      case fetch(key)
+      when Array
+        fetch(key)[idx]
+      else
+        fetch(key)
+      end
+    end
+  end
+
+  # Fetch an Array of queue values for a given role, and idx
+  # We have to be a bit careful
+  # because sidekiq_queue already supports Array values
+  # which are used to tell a single sidekiq process
+  # to monitor multiple queues.
+  # Therefore if you want per-process sidekiq_queue values
+  # you must use nested Arrays
+  #
+  # Examples
+  #
+  #    # In this case, both processes will monitor the fast AND slow queues
+  #    set :sidekiq_queue [:fast, :slow]
+  #    set :sidekiq_processes 2
+  #
+  #    # In this case, the first process will monitor the fast queue
+  #    # and the second process will monitor the slow queue
+  #    set :sidekiq_queue [[:fast], [:slow]]
+  #    set :sidekiq_processes 2
+  #
+  #    # In this case, the first process will monitor the fast queue
+  #    # and the second process will monitor the medium AND slow queues
+  #    set :sidekiq_queue [:fast, [:medium, :slow]]
+  #    set :sidekiq_processes 2
+  #
+  def sidekiq_fetch_queue(role, idx)
+    fetch_role_specific_values('queue', role, idx) do |key, idx|
+      next unless queues = fetch(key)
+
+      queues = Array(queues)
+      # If at least one of the queues is an Array of queues
+      # we assume the intention is that this is an nested Array of Arrays
+      if queues.detect{ |val| val.is_a?(Array) }
+        Array(queues[idx])
+      else
+        Array(queues)
+      end
+    end
+  end
+
+  # Fetch a value for a given config, role
+  # Returns the most specific value it can find,
+  # falling back to less & less specific values
+  # until it ultimately returns a deafult value.
+  def fetch_role_specific_values(config_name, role, *args)
     keys_to_check = []
     if sidekiq_specific_role?(role)
       keys_to_check << :"#{ role }_#{ config_name }"
@@ -269,14 +319,13 @@ namespace :sidekiq do
 
     val = nil
     keys_to_check.each do |key|
-      val ||= case fetch(key)
-      when Array
-        fetch(key)[idx]
-      else
-        fetch(key)
-      end
+      val ||= yield(key, *args)
     end
     val
+  end
+
+  def sidekiq_specific_role?(role)
+    role.to_s =~ /^sidekiq_/
   end
 
   def sidekiq_user(role)
