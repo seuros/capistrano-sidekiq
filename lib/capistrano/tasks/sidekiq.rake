@@ -56,14 +56,14 @@ namespace :sidekiq do
       end
       processes.times do |idx|
         append_idx = true
-        pid_file = fetch(:sidekiq_pid)
+        pid_file = sidekiq_fetch(:pid, role, idx)
 
         if !pid_file && sidekiq_fetch(:config, role, idx)
           config_file = sidekiq_fetch(:config, role, idx)
           conf = YAML.load(ERB.new(IO.read(config_file)).result)
           if conf
-            if conf[fetch(:sidekiq_env).to_sym]
-              pid_file = conf[fetch(:sidekiq_env).to_sym][:pidfile]
+            if conf[sidekiq_fetch(:env, role, idx).to_sym]
+              pid_file = conf[sidekiq_fetch(:env, role, idx).to_sym][:pidfile]
             end
             pid_file ||= conf[:pidfile]
           end
@@ -118,7 +118,7 @@ namespace :sidekiq do
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
-    args.push "--environment #{fetch(:sidekiq_env)}"
+    args.push "--environment #{sidekiq_fetch(:env, role, idx)}"
     args.push "--logfile #{sidekiq_fetch(:log, role, idx)}" if sidekiq_fetch(:log, role, idx)
     args.push "--require #{sidekiq_fetch(:require, role, idx)}" if sidekiq_fetch(:require, role, idx)
     args.push "--tag #{sidekiq_fetch(:tag, role, idx)}" if sidekiq_fetch(:tag, role, idx)
