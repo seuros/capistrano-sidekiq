@@ -35,10 +35,13 @@ Capistrano::Configuration.instance.load do
 
   namespace :sidekiq do
     def for_each_process(sidekiq_role, &block)
-      processes = fetch(:"#{ sidekiq_role }_processes") rescue nil
-      processes ||= fetch(:"sidekiq_#{ sidekiq_role }_processes") unless sidekiq_specific_role?(sidekiq_role) rescue nil
-      processes ||= fetch(:sidekiq_processes) rescue nil
-      processes ||= 1
+      # This line handles backwards-compatability
+      # where we must check the `app_processes` option
+      # to get the number of sidekiq processes for hosts with the :app role.
+      processes = fetch(:"#{ role }_processes") unless sidekiq_specific_role?(role) rescue nil
+      processes ||= fetch_role_specific_values(:processes, role) do |key|
+        fetch(key) rescue nil
+      end
       processes.times do |idx|
         append_idx = true
         pid_file = fetch(:sidekiq_pid)

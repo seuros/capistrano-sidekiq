@@ -47,9 +47,13 @@ namespace :sidekiq do
     sidekiq_roles = Array(fetch(:sidekiq_role))
     sidekiq_roles.each do |role|
       next unless host.roles.include?(role)
-      processes = fetch(:"#{ role }_processes")
-      processes ||= fetch(:"sidekiq_#{ role }_processes") unless sidekiq_specific_role?(role)
-      processes ||= fetch(:sidekiq_processes)
+      # This line handles backwards-compatability
+      # where we must check the `app_processes` option
+      # to get the number of sidekiq processes for hosts with the :app role.
+      processes = fetch(:"#{ role }_processes") unless sidekiq_specific_role?(role)
+      processes ||= fetch_role_specific_values(:processes, role) do |key|
+        fetch(key)
+      end
       processes.times do |idx|
         append_idx = true
         pid_file = fetch(:sidekiq_pid)
