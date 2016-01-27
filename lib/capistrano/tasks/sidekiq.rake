@@ -122,7 +122,7 @@ namespace :sidekiq do
     args.push "--logfile #{sidekiq_fetch(:log, role, idx)}" if sidekiq_fetch(:log, role, idx)
     args.push "--require #{sidekiq_fetch(:require, role, idx)}" if sidekiq_fetch(:require, role, idx)
     args.push "--tag #{sidekiq_fetch(:tag, role, idx)}" if sidekiq_fetch(:tag, role, idx)
-    sidekiq_fetch_queue(role, idx).each do |queue|
+    Array(sidekiq_fetch_queue(role, idx)).each do |queue|
       args.push "--queue #{queue}"
     end
     args.push "--config #{sidekiq_fetch(:config, role, idx)}" if sidekiq_fetch(:config, role, idx)
@@ -301,9 +301,9 @@ namespace :sidekiq do
       # If at least one of the queues is an Array of queues
       # we assume the intention is that this is an nested Array of Arrays
       if queues.detect{ |val| val.is_a?(Array) }
-        Array(queues[idx])
+        queues[idx]
       else
-        Array(queues)
+        queues
       end
     end
   end
