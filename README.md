@@ -57,6 +57,15 @@ There is a known bug that prevents sidekiq from starting when pty is true on Cap
 set :pty,  false
 ```
 
+## Bundler
+
+If you'd like to prepend `bundle exec` to your sidekiq and sidekiqctl calls, modify the SSHKit command maps
+in your deploy.rb file:
+```ruby
+SSHKit.config.command_map[:sidekiq] = "bundle exec sidekiq"
+SSHKit.config.command_map[:sidekiqctl] = "bundle exec sidekiqctl"
+```
+
 ## Multiple processes
 
 You can configure sidekiq to start with multiple processes. Just set the proper amount in `sidekiq_processes`.
