@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_role => :app
@@ -81,6 +81,16 @@ set :sidekiq_big_processes, 4
 server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
+
+You also can specify number of processes in server section
+
+```ruby
+set :sidekiq_processes, 5
+server 'example-default.com' # 5 processes is default setting
+server 'example-small.com', sidekiq_processes: 2
+server 'example-big.com', sidekiq_processes: 10
+```
+
 
 ## Customizing the monit sidekiq templates
 
