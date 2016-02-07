@@ -94,11 +94,17 @@ namespace :sidekiq do
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
-      args.push "--queue #{queue}"
+    
+    sidekiq_roles = Array(fetch(:sidekiq_role))
+    sidekiq_roles.each do |role|
+      next unless host.roles.include?(role)
+      Array(fetch(:"#{role}_queue")).each do |queue|
+        args.push "--queue #{queue}"
+      end
+      args.push "--concurrency #{fetch(:"#{role}_concurrency")}" if fetch(:"#{role}_concurrency")
     end
+ 
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
-    args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
     end
