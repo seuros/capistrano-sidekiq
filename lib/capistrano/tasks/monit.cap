@@ -104,14 +104,38 @@ namespace :sidekiq do
     end
 
     def sidekiq_concurrency
-      if fetch(:sidekiq_concurrency)
-        "--concurrency #{fetch(:sidekiq_concurrency)}"
+      conc = nil
+      sidekiq_roles = Array(fetch(:sidekiq_role))
+      sidekiq_roles.each do |role|
+        next unless host.roles.include?(role)
+        conc = fetch(:"#{role}_concurrency")
+      end
+      if conc
+        "-c #{conc}"
+      else
+        ''
       end
     end
 
+    def sidekiq_mem_limit
+      limit = nil
+      sidekiq_roles = Array(fetch(:sidekiq_role))
+      sidekiq_roles.each do |role|
+        next unless host.roles.include?(role)
+        limit = fetch(:"#{role}_mem_limit")
+      end
+      limit
+    end
+
     def sidekiq_queues
-      Array(fetch(:sidekiq_queue)).map do |queue|
-        "--queue #{queue}"
+      queues = []
+      sidekiq_roles = Array(fetch(:sidekiq_role))
+      sidekiq_roles.each do |role|
+        next unless host.roles.include?(role)
+        queues += fetch(:"#{role}_queue")
+      end
+      queues.collect do |queue|
+        "-q #{queue}"
       end.join(' ')
     end
 
