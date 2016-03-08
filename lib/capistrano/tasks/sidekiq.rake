@@ -95,6 +95,7 @@ namespace :sidekiq do
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
     Array(fetch(:sidekiq_queue)).each do |queue|
+      queue = "#{queue[0]},#{queue[1]}" if queue.is_a?(Array)
       args.push "--queue #{queue}"
     end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
