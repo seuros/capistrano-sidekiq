@@ -86,7 +86,25 @@ namespace :sidekiq do
     end
   end
 
-  def start_sidekiq(pid_file, idx = 0)
+  # For example, we want queue3 run only on servers that has background role
+  # I think the number of queues is countable.
+  # set :sidekiq_queue, {
+  #   "queue1" => [:web, :db], # queue1 must have two roles.
+  #   "queue2" => :web,
+  #   "queue3" => :background
+  # }
+
+  def sidekiq_queues_with_roles(sidekiq_queue, roles)
+    if sidekiq_queue.is_a?(Hash)
+      sidekiq_queue.map do |queue, allowed_roles|
+        (Array(allowed_roles) - roles).empty? ? "--queue #{queue}" : nil
+      end.compact
+    else
+      Array(sidekiq_queue).map { |queue| "--queue #{queue}" }
+    end
+  end
+
+  def start_sidekiq(pid_file, role, idx = 0)
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
@@ -94,9 +112,10 @@ namespace :sidekiq do
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
-      args.push "--queue #{queue}"
-    end
+
+    queues = sidekiq_queues_with_roles(fetch(:sidekiq_queue), role.roles.to_a)
+    args.push(*queues)
+
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if process_options = fetch(:sidekiq_options_per_process)
@@ -161,7 +180,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+          start_sidekiq(pid_file, role, idx) unless pid_process_exists?(pid_file)
         end
       end
     end
@@ -181,7 +200,7 @@ namespace :sidekiq do
           if pid_process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
-          start_sidekiq(pid_file, idx)
+          start_sidekiq(pid_file, role, idx)
         end
       end
     end
@@ -208,7 +227,7 @@ namespace :sidekiq do
       switch_user(role) do
         for_each_process do |pid_file, idx|
           unless pid_file_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
+            start_sidekiq(pid_file, role, idx)
           end
         end
       end
