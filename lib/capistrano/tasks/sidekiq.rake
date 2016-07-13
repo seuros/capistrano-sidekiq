@@ -42,7 +42,6 @@ namespace :sidekiq do
   def fetch_for_role(key)
     host.roles.each do |role|
       role_key = "#{role}_#{key.to_s.gsub('sidekiq_', '')}".to_sym
-      puts "role: #{role}, key: #{role_key}, value: #{fetch(role_key)}"
       return fetch(role_key) if fetch(role_key)
     end
 
