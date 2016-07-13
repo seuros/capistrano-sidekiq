@@ -39,6 +39,16 @@ namespace :sidekiq do
     end
   end
 
+  def fetch_for_role(key)
+    host.roles.each do |role|
+      role_key = "#{role}_#{key.to_s.gsub('sidekiq_', '')}".to_sym
+      puts "role: #{role}, key: #{role_key}, value: #{fetch(role_key)}"
+      return fetch(role_key) if fetch(role_key)
+    end
+
+    return fetch(key)
+  end
+
   def processes_pids
     pids = []
     sidekiq_roles = Array(fetch(:sidekiq_role))
@@ -63,13 +73,13 @@ namespace :sidekiq do
 
   def stop_sidekiq(pid_file)
     if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      if fetch(:sidekiq_use_signals)
+      if fetch_for_role(:sidekiq_use_signals)
         background "kill -TERM `cat #{pid_file}`"
       else
-        background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+        background :sidekiqctl, 'stop', "#{pid_file}", fetch_for_role(:sidekiq_timeout)
       end
     else
-      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      execute :sidekiqctl, 'stop', "#{pid_file}", fetch_for_role(:sidekiq_timeout)
     end
   end
 
@@ -90,20 +100,20 @@ namespace :sidekiq do
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
-    args.push "--environment #{fetch(:sidekiq_env)}"
-    args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
-    args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
-    args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
+    args.push "--environment #{fetch_for_role(:sidekiq_env)}"
+    args.push "--logfile #{fetch_for_role(:sidekiq_log)}" if fetch_for_role(:sidekiq_log)
+    args.push "--require #{fetch_for_role(:sidekiq_require)}" if fetch_for_role(:sidekiq_require)
+    args.push "--tag #{fetch_for_role(:sidekiq_tag)}" if fetch_for_role(:sidekiq_tag)
+    Array(fetch_for_role(:sidekiq_queue)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
-    args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
-    if process_options = fetch(:sidekiq_options_per_process)
+    args.push "--config #{fetch_for_role(:sidekiq_config)}" if fetch_for_role(:sidekiq_config)
+    args.push "--concurrency #{fetch_for_role(:sidekiq_concurrency)}" if fetch_for_role(:sidekiq_concurrency)
+    if process_options = fetch_for_role(:sidekiq_options_per_process)
       args.push process_options[idx]
     end
     # use sidekiq_options for special options
-    args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
+    args.push fetch_for_role(:sidekiq_options) if fetch_for_role(:sidekiq_options)
 
     if defined?(JRUBY_VERSION)
       args.push '>/dev/null 2>&1 &'
