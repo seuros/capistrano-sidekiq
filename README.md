@@ -32,13 +32,13 @@ Configurable options, shown here with defaults:
 
 ```ruby
 :sidekiq_default_hooks => true
-:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq-0.pid') # if you specify a pidfile in your sidekiq_config file that value will be used as the default.
 :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_role => :app
