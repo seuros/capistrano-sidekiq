@@ -16,6 +16,8 @@ namespace :load do
     set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
     # Bundler integration
     set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
+    # Init system integration
+    set :init_system, -> { nil }
   end
 end
 
@@ -130,10 +132,15 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
-        if test("[ -d #{release_path} ]") # fixes #11
-          for_each_process(true) do |pid_file, idx|
-            if pid_process_exists?(pid_file)
-              quiet_sidekiq(pid_file)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user reload sidekiq@#{fetch :application}-#{fetch :stage}.service", raise_on_non_zero_exit: false
+        else
+          if test("[ -d #{release_path} ]") # fixes #11
+            for_each_process(true) do |pid_file, idx|
+              if pid_process_exists?(pid_file)
+                quiet_sidekiq(pid_file)
+              end
             end
           end
         end
@@ -145,10 +152,15 @@ namespace :sidekiq do
   task :stop do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
-        if test("[ -d #{release_path} ]")
-          for_each_process(true) do |pid_file, idx|
-            if pid_process_exists?(pid_file)
-              stop_sidekiq(pid_file)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user stop sidekiq@#{fetch :application}-#{fetch :stage}.service"
+        else
+          if test("[ -d #{release_path} ]")
+            for_each_process(true) do |pid_file, idx|
+              if pid_process_exists?(pid_file)
+                stop_sidekiq(pid_file)
+              end
             end
           end
         end
@@ -161,8 +173,13 @@ namespace :sidekiq do
   task :start do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
-        for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user start sidekiq@#{fetch :application}-#{fetch :stage}.service"
+        else
+          for_each_process do |pid_file, idx|
+            start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+          end
         end
       end
     end
@@ -215,6 +232,18 @@ namespace :sidekiq do
       end
     end
   end
+
+  task :install do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user enable sidekiq@#{fetch :application}-#{fetch :stage}.service"
+        end
+      end
+    end
+  end
+
 
   def switch_user(role, &block)
     su_user = sidekiq_user(role)
