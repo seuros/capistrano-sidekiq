@@ -163,6 +163,7 @@ namespace :sidekiq do
         end
       end
     end
+    Rake::Task["sidekiq:stop"].reenable
   end
 
   desc 'Start sidekiq'
