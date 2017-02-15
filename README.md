@@ -22,35 +22,38 @@ And then execute:
 
 ## Usage
 ```ruby
-    # Capfile
-
-    require 'capistrano/sidekiq'
-    require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
+# Capfile
+require 'capistrano/sidekiq'
+require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
 ```
 
 
 Configurable options, shown here with defaults:
 
 ```ruby
-    :sidekiq_default_hooks => true
-    :sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
-    :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
-    :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
-    :sidekiq_options => nil
-    :sidekiq_require => nil
-    :sidekiq_tag => nil
-    :sidekiq_config => nil
-    :sidekiq_queue => nil
-    :sidekiq_timeout => 10
-    :sidekiq_role => :app
-    :sidekiq_processes => 1
-    :sidekiq_options_per_process => nil
-    :sidekiq_concurrency => nil
-    :sidekiq_monit_templates_path => 'config/deploy/templates'
-    :sidekiq_monit_use_sudo => true
-    :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
-    :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
-    :sidekiq_user => nil #user to run sidekiq as
+:sidekiq_default_hooks => true
+:sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') # ensure this path exists in production before deploying.
+:sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
+:sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
+:sidekiq_options => nil
+:sidekiq_require => nil
+:sidekiq_tag => nil
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_queue => nil
+:sidekiq_timeout => 10
+:sidekiq_role => :app
+:sidekiq_processes => 1
+:sidekiq_options_per_process => nil
+:sidekiq_concurrency => nil
+:sidekiq_monit_templates_path => 'config/deploy/templates'
+:sidekiq_monit_conf_dir => '/etc/monit/conf.d'
+:sidekiq_monit_use_sudo => true
+:monit_bin => '/usr/bin/monit'
+:sidekiq_monit_default_hooks => true
+:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}"
+:sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
+:sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
+:sidekiq_user => nil #user to run sidekiq as
 ```
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
@@ -100,8 +103,7 @@ server 'example-big.com', roles: [:sidekiq_big]
 If you need change some config in redactor, you can
 
 ```
-    bundle exec rails generate capistrano:sidekiq:monit:template
-
+bundle exec rails generate capistrano:sidekiq:monit:template
 ```
 
 If your deploy user has no need in `sudo` for using monit, you can disable it as follows:
@@ -109,32 +111,6 @@ If your deploy user has no need in `sudo` for using monit, you can disable it as
 ```ruby
 set :sidekiq_monit_use_sudo, false
 ```
-
-## Changelog
-- 0.5.4: Add support for custom count of processes per host in monit task @okoriko
-- 0.5.3: Custom count of processes per each host
-- 0.5.0: Multiple processes @mrsimo
-- 0.3.9: Restore daemon flag from Monit template
-- 0.3.8:
-        * Update monit template: use su instead of sudo / permit all Sidekiq options @bensie
-        * Unmonitor monit while deploy @Saicheg
-- 0.3.7:
-        * fix capistrano2 task @tribble
-        * Run Sidekiq as daemon from Monit @dpaluy
-- 0.3.5: Added :sidekiq_tag for capistrano2 @OscarBarrett
-- 0.3.4: fix bug in sidekiq:start for capistrano 2 task
-- 0.3.3: sidekiq:restart after deploy:restart added to default hooks
-- 0.3.2: :sidekiq_queue accept an array
-- 0.3.1: Fix logs @rottman, add concurrency option support @ungsophy
-- 0.3.0: Fix monit task @andreygerasimchuk
-- 0.2.9: Check if current directory exist @alexdunae
-- 0.2.8: Added :sidekiq_queue & :sidekiq_config
-- 0.2.7: Signal usage @penso
-- 0.2.6: sidekiq:start check if sidekiq is running
-- 0.2.5: bug fixes
-- 0.2.4: Fast deploy with :sidekiq_run_in_background
-- 0.2.3: Added monit tasks (alpha)
-- 0.2.0: Added sidekiq:rolling_restart - @jlecour
 
 ## Contributing
 
