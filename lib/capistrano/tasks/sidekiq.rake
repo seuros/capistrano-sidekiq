@@ -86,7 +86,7 @@ namespace :sidekiq do
     end
   end
 
-  def start_sidekiq(pid_file, idx = 0)
+  def start_sidekiq(pid_file, role, idx = 0)
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
@@ -94,7 +94,7 @@ namespace :sidekiq do
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     args.push "--tag #{fetch(:sidekiq_tag)}" if fetch(:sidekiq_tag)
-    Array(fetch(:sidekiq_queue)).each do |queue|
+    Array(queue_for_host(role)).each do |queue|
       args.push "--queue #{queue}"
     end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
@@ -116,6 +116,16 @@ namespace :sidekiq do
       background :sidekiq, args.compact.join(' ')
     else
       execute :sidekiq, args.compact.join(' ')
+    end
+  end
+
+  def queue_for_host(role)
+    sidekiq_roles = role.roles & fetch(:sidekiq_role)
+    queues = sidekiq_roles.map { |role| fetch(:"#{role}_queue") }.compact
+    if queues.empty?
+      fetch(:sidekiq_queue)
+    else
+      queues
     end
   end
 
@@ -162,7 +172,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+          start_sidekiq(pid_file, role, idx) unless pid_process_exists?(pid_file)
         end
       end
     end
@@ -182,7 +192,7 @@ namespace :sidekiq do
           if pid_process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
-          start_sidekiq(pid_file, idx)
+          start_sidekiq(pid_file, role, idx)
         end
       end
     end
@@ -209,7 +219,7 @@ namespace :sidekiq do
       switch_user(role) do
         for_each_process do |pid_file, idx|
           unless pid_file_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
+            start_sidekiq(pid_file, role, idx)
           end
         end
       end

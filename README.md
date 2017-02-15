@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_role => :app
@@ -82,6 +82,18 @@ You can configure how many processes you want to run on each host next way:
 set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
 set :sidekiq_small_processes, 1
 set :sidekiq_big_processes, 4
+server 'example-small.com', roles: [:sidekiq_small]
+server 'example-big.com', roles: [:sidekiq_big]
+```
+
+## Different queues of processes per role (Support only Capistrano3)
+
+You can configure queues you want to run on each role next way:
+
+```ruby
+set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_small_queue, :small
+set :sidekiq_big_queue, :big
 server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
