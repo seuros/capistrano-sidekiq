@@ -34,6 +34,8 @@ namespace :sidekiq do
         sudo_if_needed mv_command
 
         sudo_if_needed "#{fetch(:monit_bin)} reload"
+        # Wait for Monit to be reloaded
+        sleep 1
       end
     end
 
