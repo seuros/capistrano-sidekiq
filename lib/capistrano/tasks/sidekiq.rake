@@ -18,6 +18,8 @@ namespace :load do
     set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
     # Init system integration
     set :init_system, -> { nil }
+    # systemd integration
+    set :service_unit_name, "sidekiq-#{fetch(:stage)}.service"
   end
 end
 
@@ -134,7 +136,7 @@ namespace :sidekiq do
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
-          execute :systemctl, "--user reload sidekiq@#{fetch :application}-#{fetch :stage}.service", raise_on_non_zero_exit: false
+          execute :systemctl, "--user", "reload", fetch(:service_unit_name), raise_on_non_zero_exit: false
         else
           if test("[ -d #{release_path} ]") # fixes #11
             for_each_process(true) do |pid_file, idx|
@@ -154,7 +156,7 @@ namespace :sidekiq do
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
-          execute :systemctl, "--user stop sidekiq@#{fetch :application}-#{fetch :stage}.service"
+          execute :systemctl, "--user", "stop", fetch(:service_unit_name)
         else
           if test("[ -d #{release_path} ]")
             for_each_process(true) do |pid_file, idx|
@@ -175,7 +177,7 @@ namespace :sidekiq do
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
-          execute :systemctl, "--user start sidekiq@#{fetch :application}-#{fetch :stage}.service"
+          execute :systemctl, "--user", "start", fetch(:service_unit_name)
         else
           for_each_process do |pid_file, idx|
             start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
@@ -238,12 +240,47 @@ namespace :sidekiq do
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
-          execute :systemctl, "--user enable sidekiq@#{fetch :application}-#{fetch :stage}.service"
+          create_systemd_template
+          execute :systemctl, "--user", "enable", fetch(:service_unit_name)
         end
       end
     end
   end
 
+  task :uninstall do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user", "disable", fetch(:service_unit_name)
+          execute :rm, File.join(fetch(:service_unit_path, fetch_systemd_unit_path),fetch(:service_unit_name))
+        end
+      end
+    end
+  end
+
+  def fetch_systemd_unit_path
+    home_dir = capture :pwd
+    File.join(home_dir, ".config", "systemd", "user")
+  end
+
+  def create_systemd_template
+    search_paths = [
+      File.expand_path(
+        File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
+        __FILE__
+      ),
+    ]
+    template_path = search_paths.detect {|path| File.file?(path)}
+    template = File.read(template_path)
+    systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
+    execute :mkdir, "-p", systemd_path
+    upload!(
+      StringIO.new(ERB.new(template).result(binding)),
+      "#{systemd_path}/#{fetch :service_unit_name}"
+    )
+    execute :systemctl, "--user", "daemon-reload"
+  end
 
   def switch_user(role, &block)
     su_user = sidekiq_user(role)
