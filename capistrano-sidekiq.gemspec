@@ -5,7 +5,7 @@ require 'capistrano/sidekiq/version'
 
 Gem::Specification.new do |spec|
   spec.name = 'capistrano-sidekiq'
-  spec.version = Capistrano::Sidekiq::VERSION
+  spec.version = Capistrano::SidekiqVERSION
   spec.authors = ['Abdelkader Boudih']
   spec.email = ['terminale@gmail.com']
   spec.summary = %q{Sidekiq integration for Capistrano}
@@ -17,6 +17,6 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files`.split($/)
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'capistrano'
-  spec.add_dependency 'sidekiq', '>= 3.4'
+  spec.add_dependency 'capistrano', '>= 3.7'
+  spec.add_dependency 'sidekiq', '>= 5'
 end

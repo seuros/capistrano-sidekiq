@@ -1,4 +1,7 @@
 ## Changelog
+- 1.0.0:
+        * Drop support for capistrano 2
+        * Added Plugin system
 - 0.10.0:
         * Fix Monit tasks
         * sidekiq:stop task perpertually callable

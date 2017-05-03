@@ -1,28 +1,5 @@
-namespace :load do
-  task :defaults do
-    set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
-    set :sidekiq_monit_use_sudo, true
-    set :monit_bin, '/usr/bin/monit'
-    set :sidekiq_monit_default_hooks, true
-    set :sidekiq_monit_templates_path, 'config/deploy/templates'
-  end
-end
-
-namespace :deploy do
-  before :starting, :check_sidekiq_monit_hooks do
-    if fetch(:sidekiq_default_hooks) && fetch(:sidekiq_monit_default_hooks)
-      invoke 'sidekiq:monit:add_default_hooks'
-    end
-  end
-end
-
 namespace :sidekiq do
   namespace :monit do
-
-    task :add_default_hooks do
-      before 'deploy:updating',  'sidekiq:monit:unmonitor'
-      after  'deploy:published', 'sidekiq:monit:monitor'
-    end
 
     desc 'Config Sidekiq monit-service'
     task :config do
