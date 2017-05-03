@@ -169,6 +169,52 @@ module Capistrano
       template_path = search_paths.detect { |path| File.file?(path) }
       File.read(template_path)
     end
+
+    def sidekiq_service_name(index=nil)
+      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
+    end
+
+    def sidekiq_config
+      if fetch(:sidekiq_config)
+        "--config #{fetch(:sidekiq_config)}"
+      end
+    end
+
+    def sidekiq_concurrency
+      if fetch(:sidekiq_concurrency)
+        "--concurrency #{fetch(:sidekiq_concurrency)}"
+      end
+    end
+
+    def sidekiq_queues
+      Array(fetch(:sidekiq_queue)).map do |queue|
+        "--queue #{queue}"
+      end.join(' ')
+    end
+
+    def sidekiq_logfile
+      if fetch(:sidekiq_log)
+        "--logfile #{fetch(:sidekiq_log)}"
+      end
+    end
+
+    def sidekiq_require
+      if fetch(:sidekiq_require)
+        "--require #{fetch(:sidekiq_require)}"
+      end
+    end
+
+    def sidekiq_options_per_process
+      fetch(:sidekiq_options_per_process) || []
+    end
+
+    def sudo_if_needed(command)
+      send(use_sudo? ? :sudo : :execute, command)
+    end
+
+    def use_sudo?
+      fetch(:sidekiq_monit_use_sudo)
+    end
   end
 end
 
