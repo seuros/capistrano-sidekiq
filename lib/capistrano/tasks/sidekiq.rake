@@ -154,7 +154,6 @@ namespace :sidekiq do
         end
       end
     end
-    Rake::Task["sidekiq:stop"].reenable
   end
 
   desc 'Start sidekiq'
@@ -170,7 +169,7 @@ namespace :sidekiq do
 
   desc 'Restart sidekiq'
   task :restart do
-    invoke 'sidekiq:stop'
+    invoke! 'sidekiq:stop'
     invoke 'sidekiq:start'
   end
 
