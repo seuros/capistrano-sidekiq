@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage = 'https://github.com/seuros/capistrano-sidekiq'
   spec.license = 'LGPL-3.0'
 
-  spec.required_ruby_version     = '>= 1.9.3'
+  spec.required_ruby_version     = '>= 2.0.0'
   spec.files = `git ls-files`.split($/)
   spec.require_paths = ['lib']
 
