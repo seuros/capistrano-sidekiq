@@ -39,8 +39,8 @@ namespace :sidekiq do
 
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+      on roles(fetch(:sidekiq_role)) do |role|
+        sidekiq_processes(role).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
           rescue
@@ -53,8 +53,8 @@ namespace :sidekiq do
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+      on roles(fetch(:sidekiq_role)) do |role|
+        sidekiq_processes(role).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
           rescue
@@ -66,8 +66,8 @@ namespace :sidekiq do
 
     desc 'Start Sidekiq monit-service'
     task :start do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+      on roles(fetch(:sidekiq_role)) do |role|
+        sidekiq_processes(role).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
         end
       end
@@ -75,8 +75,8 @@ namespace :sidekiq do
 
     desc 'Stop Sidekiq monit-service'
     task :stop do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+      on roles(fetch(:sidekiq_role)) do |role|
+        sidekiq_processes(role).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
         end
       end
@@ -84,11 +84,15 @@ namespace :sidekiq do
 
     desc 'Restart Sidekiq monit-service'
     task :restart do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+      on roles(fetch(:sidekiq_role)) do |role|
+        sidekiq_processes(role).times do |idx|
           sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
         end
       end
+    end
+
+    def sidekiq_processes(role)
+      role.properties.sidekiq_processes || fetch(:sidekiq_processes).to_i
     end
 
     def sidekiq_service_name(index=nil)
