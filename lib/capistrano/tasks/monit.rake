@@ -109,6 +109,7 @@ namespace :sidekiq do
 
     def sidekiq_queues
       Array(fetch(:sidekiq_queue)).map do |queue|
+        queue = "#{queue[0]},#{queue[1]}" if queue.is_a?(Array)
         "--queue #{queue}"
       end.join(' ')
     end
