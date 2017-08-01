@@ -3,3 +3,4 @@ if Gem::Specification.find_by_name('capistrano').version >= Gem::Version.new('3.
 else
   require_relative 'tasks/capistrano2'
 end
+require 'parallel'

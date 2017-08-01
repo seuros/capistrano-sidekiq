@@ -19,4 +19,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'capistrano', '>= 3.9.0'
   spec.add_dependency 'sidekiq', '>= 3.4'
+  spec.add_dependency 'parallel'
 end

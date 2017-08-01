@@ -5,6 +5,8 @@ namespace :load do
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
     set :sidekiq_monit_templates_path, 'config/deploy/templates'
+    # Number of threads for command execution in each host
+    set :monit_operation_concurrency, -> { fetch(:sidekiq_operation_concurrency) }
   end
 end
 
@@ -40,12 +42,12 @@ namespace :sidekiq do
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
       on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+        each_process(fetch(:sidekiq_processes)) do |sidekiq_service_name|
           begin
-            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name}"
           rescue
             invoke 'sidekiq:monit:config'
-            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
+            sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name}"
           end
         end
       end
@@ -53,10 +55,11 @@ namespace :sidekiq do
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
+      binding.pry
       on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
+        each_process(fetch(:sidekiq_processes)) do |sidekiq_service_name|
           begin
-            sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
+            sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name}"
           rescue
             # no worries here
           end
@@ -67,8 +70,8 @@ namespace :sidekiq do
     desc 'Start Sidekiq monit-service'
     task :start do
       on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
+        each_process(fetch(:sidekiq_processes)) do |sidekiq_service_name|
+          sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name}"
         end
       end
     end
@@ -76,8 +79,8 @@ namespace :sidekiq do
     desc 'Stop Sidekiq monit-service'
     task :stop do
       on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
+        each_process(fetch(:sidekiq_processes)) do |sidekiq_service_name|
+          sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name}"
         end
       end
     end
@@ -85,8 +88,8 @@ namespace :sidekiq do
     desc 'Restart Sidekiq monit-service'
     task :restart do
       on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
+        each_process(fetch(:sidekiq_processes)) do |sidekiq_service_name|
+          sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name}"
         end
       end
     end
@@ -137,5 +140,10 @@ namespace :sidekiq do
       fetch(:sidekiq_monit_use_sudo)
     end
 
+    def each_process(sidekiq_processes, &block)
+      Parallel.each_with_index((0...sidekiq_processes), in_threads: fetch(:monit_operation_concurrency)) do |idx|
+        yield(sidekiq_service_name(idx))
+      end
+    end
   end
 end
