@@ -86,6 +86,14 @@ namespace :sidekiq do
     end
   end
 
+  def custom_config
+    hostname = host.hostname.gsub(/\W/, '_')
+    return if fetch(:"sidekiq_#{hostname}_config").nil? && fetch(:sidekiq_config).nil?
+    config_string = "--config "
+    return config_string + fetch(:"sidekiq_#{hostname}_config") if fetch(:"sidekiq_#{hostname}_config")
+    config_string + fetch(:sidekiq_config)
+  end
+
   def start_sidekiq(pid_file, idx = 0)
     args = []
     args.push "--index #{idx}"
@@ -97,7 +105,7 @@ namespace :sidekiq do
     Array(fetch(:sidekiq_queue)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+    args.push custom_config
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if process_options = fetch(:sidekiq_options_per_process)
       args.push process_options[idx]
