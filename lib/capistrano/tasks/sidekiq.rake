@@ -229,7 +229,7 @@ namespace :sidekiq do
 
   def sidekiq_user(role)
     properties = role.properties
-    properties.fetch(:sidekiq_user) ||               # local property for sidekiq only
+    properties.fetch(:sidekiq_user) || # local property for sidekiq only
     fetch(:sidekiq_user) ||
     properties.fetch(:run_as) || # global property across multiple capistrano gems
     role.user

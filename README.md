@@ -46,12 +46,14 @@ Configurable options, shown here with defaults:
 :sidekiq_options_per_process => nil
 :sidekiq_concurrency => nil
 :sidekiq_use_signals => false
+# sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
 :sidekiq_monit_use_sudo => true
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}"
+
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 :sidekiq_user => nil #user to run sidekiq as
