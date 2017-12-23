@@ -1,6 +1,7 @@
 namespace :load do
   task :defaults do
     set :sidekiq_default_hooks, -> { true }
+    set :sidekiq_use_signals, -> { false }
 
     set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
@@ -228,35 +229,9 @@ namespace :sidekiq do
 
   def sidekiq_user(role)
     properties = role.properties
-    properties.fetch(:sidekiq_user) ||               # local property for sidekiq only
+    properties.fetch(:sidekiq_user) || # local property for sidekiq only
     fetch(:sidekiq_user) ||
     properties.fetch(:run_as) || # global property across multiple capistrano gems
     role.user
-  end
-
-  def upload_sidekiq_template(from, to, role)
-    template = sidekiq_template(from, role)
-    upload!(StringIO.new(ERB.new(template).result(binding)), to)
-  end
-
-  def sidekiq_template(name, role)
-    local_template_directory = fetch(:sidekiq_monit_templates_path)
-
-    search_paths = [
-      "#{name}-#{role.hostname}-#{fetch(:stage)}.erb",
-      "#{name}-#{role.hostname}.erb",
-      "#{name}-#{fetch(:stage)}.erb",
-      "#{name}.erb"
-    ].map { |filename| File.join(local_template_directory, filename) }
-
-    global_search_path = File.expand_path(
-      File.join(*%w[.. .. .. generators capistrano sidekiq monit templates], "#{name}.conf.erb"),
-      __FILE__
-    )
-
-    search_paths << global_search_path
-
-    template_path = search_paths.detect { |path| File.file?(path) }
-    File.read(template_path)
   end
 end
