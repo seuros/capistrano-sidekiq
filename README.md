@@ -45,6 +45,7 @@ Configurable options, shown here with defaults:
 :sidekiq_processes => 1
 :sidekiq_options_per_process => nil
 :sidekiq_concurrency => nil
+:sidekiq_use_signals => false
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
 :sidekiq_monit_use_sudo => true
