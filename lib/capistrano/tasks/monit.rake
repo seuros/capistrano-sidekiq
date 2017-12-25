@@ -5,6 +5,7 @@ namespace :load do
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
     set :sidekiq_monit_templates_path, 'config/deploy/templates'
+    set :sidekiq_monit_group, nil
   end
 end
 
@@ -92,7 +93,7 @@ namespace :sidekiq do
     end
 
     def sidekiq_service_name(index=nil)
-      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
+      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + (index ? "_#{index}" : '')
     end
 
     def sidekiq_config
