@@ -5,6 +5,7 @@ namespace :load do
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
     set :sidekiq_monit_templates_path, 'config/deploy/templates'
+    set :sidekiq_monit_group, nil
   end
 end
 

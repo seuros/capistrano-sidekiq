@@ -52,6 +52,7 @@ Configurable options, shown here with defaults:
 :sidekiq_monit_use_sudo => true
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
+:sidekiq_monit_group => nil
 :sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '') 
 
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
