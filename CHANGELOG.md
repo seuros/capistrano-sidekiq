@@ -1,13 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+- Prepend underscore before service name index @Tensho
+- Convert CHANGELOG to Markdown @Tensho
+
 ## 0.20.0
 
-- Use new capistrano DSL for reenable tasks
+- Use new capistrano DSL for reenable tasks @Tensho
 
 ## 0.10.0
 
 - Fix Monit tasks
-- `sidekiq:stop` task perpertually callable
+- `sidekiq:stop` task perpertually callable @Tensho
 
 ## 0.5.4
  
