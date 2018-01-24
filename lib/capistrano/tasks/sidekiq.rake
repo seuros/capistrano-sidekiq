@@ -6,7 +6,7 @@ namespace :load do
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
     set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
     set :sidekiq_timeout, 10
-    set :sidekiq_role, :app
+    set :sidekiq_roles, :app
     set :sidekiq_processes, 1
     set :sidekiq_options_per_process, nil
     set :sidekiq_user, nil
@@ -38,7 +38,7 @@ namespace :sidekiq do
 
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
   task :quiet do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         if test("[ -d #{release_path} ]")
           each_process_with_index(reverse: true) do |pid_file, idx|
@@ -53,7 +53,7 @@ namespace :sidekiq do
 
   desc 'Stop sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)'
   task :stop do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         if test("[ -d #{release_path} ]")
           each_process_with_index(reverse: true) do |pid_file, idx|
@@ -68,7 +68,7 @@ namespace :sidekiq do
 
   desc 'Start sidekiq'
   task :start do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index do |pid_file, idx|
           unless pid_file_exists?(pid_file) && process_exists?(pid_file)
@@ -87,7 +87,7 @@ namespace :sidekiq do
 
   desc 'Rolling-restart sidekiq'
   task :rolling_restart do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index(true) do |pid_file, idx|
           if pid_file_exists?(pid_file) && process_exists?(pid_file)
@@ -101,7 +101,7 @@ namespace :sidekiq do
 
   desc 'Delete any pid file not in use'
   task :cleanup do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index do |pid_file, idx|
           unless process_exists?(pid_file)
@@ -118,7 +118,7 @@ namespace :sidekiq do
   desc 'Respawn missing sidekiq processes'
   task :respawn do
     invoke 'sidekiq:cleanup'
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index do |pid_file, idx|
           unless pid_file_exists?(pid_file)
@@ -140,7 +140,7 @@ namespace :sidekiq do
   end
 
   def pid_files
-    sidekiq_roles = Array(fetch(:sidekiq_role))
+    sidekiq_roles = Array(fetch(:sidekiq_roles))
     sidekiq_roles.select! { |role| host.roles.include?(role) }
     sidekiq_roles.flat_map do |role|
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
