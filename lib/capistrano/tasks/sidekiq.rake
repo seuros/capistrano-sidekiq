@@ -1,7 +1,6 @@
 namespace :load do
   task :defaults do
     set :sidekiq_default_hooks, true
-    set :sidekiq_use_signals, false
 
     set :sidekiq_pid, -> { File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') }
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
@@ -63,27 +62,15 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      if fetch(:sidekiq_use_signals)
-        background "kill -TERM `cat #{pid_file}`"
-      else
-        background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
-      end
-    else
-      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
-    end
+    execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
   end
 
   def quiet_sidekiq(pid_file)
-    if fetch(:sidekiq_use_signals)
-      background "kill -USR1 `cat #{pid_file}`"
-    else
-      begin
-        execute :sidekiqctl, 'quiet', "#{pid_file}"
-      rescue SSHKit::Command::Failed
-        # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
-        warn 'sidekiqctl not found (ignore if this is the first deploy)'
-      end
+    begin
+      execute :sidekiqctl, 'quiet', "#{pid_file}"
+    rescue SSHKit::Command::Failed
+      # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
+      warn 'sidekiqctl not found (ignore if this is the first deploy)'
     end
   end
 
@@ -113,11 +100,7 @@ namespace :sidekiq do
       args.push '--daemon'
     end
 
-    if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :sidekiq, args.compact.join(' ')
-    else
-      execute :sidekiq, args.compact.join(' ')
-    end
+    execute :sidekiq, args.compact.join(' ')
   end
 
   task :add_default_hooks do
