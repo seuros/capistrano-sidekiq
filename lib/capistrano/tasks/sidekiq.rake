@@ -29,7 +29,107 @@ namespace :deploy do
 end
 
 namespace :sidekiq do
-  def each_pid_file_with_index(reverse: false)
+  task :add_default_hooks do
+    after 'deploy:starting',  'sidekiq:quiet'
+    after 'deploy:updated',   'sidekiq:stop'
+    after 'deploy:reverted',  'sidekiq:stop'
+    after 'deploy:published', 'sidekiq:start'
+  end
+
+  desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
+  task :quiet do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        if test("[ -d #{release_path} ]")
+          each_process_with_index(reverse: true) do |pid_file, idx|
+            if pid_file_exists?(pid_file) && process_exists?(pid_file)
+              quiet_sidekiq(pid_file)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  desc 'Stop sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)'
+  task :stop do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        if test("[ -d #{release_path} ]")
+          each_process_with_index(reverse: true) do |pid_file, idx|
+            if pid_file_exists?(pid_file) && process_exists?(pid_file)
+              stop_sidekiq(pid_file)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  desc 'Start sidekiq'
+  task :start do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        each_process_with_index do |pid_file, idx|
+          unless pid_file_exists?(pid_file) && process_exists?(pid_file)
+            start_sidekiq(pid_file, idx)
+          end
+        end
+      end
+    end
+  end
+
+  desc 'Restart sidekiq'
+  task :restart do
+    invoke! 'sidekiq:stop'
+    invoke 'sidekiq:start'
+  end
+
+  desc 'Rolling-restart sidekiq'
+  task :rolling_restart do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        each_process_with_index(true) do |pid_file, idx|
+          if pid_file_exists?(pid_file) && process_exists?(pid_file)
+            stop_sidekiq(pid_file)
+          end
+          start_sidekiq(pid_file, idx)
+        end
+      end
+    end
+  end
+
+  desc 'Delete any pid file not in use'
+  task :cleanup do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        each_process_with_index do |pid_file, idx|
+          unless process_exists?(pid_file)
+            if pid_file_exists?(pid_file)
+              execute "rm #{pid_file}"
+            end
+          end
+        end
+      end
+    end
+  end
+
+  # TODO: Don't start if all processes are off, raise warning.
+  desc 'Respawn missing sidekiq processes'
+  task :respawn do
+    invoke 'sidekiq:cleanup'
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        each_process_with_index do |pid_file, idx|
+          unless pid_file_exists?(pid_file)
+            start_sidekiq(pid_file, idx)
+          end
+        end
+      end
+    end
+  end
+
+  def each_process_with_index(reverse: false)
     _pid_files = pid_files
     _pid_files.reverse! if reverse
     _pid_files.each_with_index do |pid_file, idx|
@@ -56,17 +156,17 @@ namespace :sidekiq do
     test(*("kill -0 $( cat #{pid_file} )").split(' '))
   end
 
-  def stop_sidekiq(pid_file)
-    execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
-  end
-
   def quiet_sidekiq(pid_file)
     begin
       execute :sidekiqctl, 'quiet', "#{pid_file}"
     rescue SSHKit::Command::Failed
-      # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
+      # If gems are not installed (first deploy) and sidekiq_default_hooks is active
       warn 'sidekiqctl not found (ignore if this is the first deploy)'
     end
+  end
+
+  def stop_sidekiq(pid_file)
+    execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
   end
 
   def start_sidekiq(pid_file, idx = 0)
@@ -96,104 +196,6 @@ namespace :sidekiq do
     end
 
     execute :sidekiq, args.compact.join(' ')
-  end
-
-  task :add_default_hooks do
-    after 'deploy:starting', 'sidekiq:quiet'
-    after 'deploy:updated', 'sidekiq:stop'
-    after 'deploy:reverted', 'sidekiq:stop'
-    after 'deploy:published', 'sidekiq:start'
-  end
-
-  desc 'Quiet sidekiq (stop processing new tasks)'
-  task :quiet do
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        if test("[ -d #{release_path} ]")
-          each_pid_file_with_index(reverse: true) do |pid_file, idx|
-            if pid_file_exists?(pid_file) && process_exists?(pid_file)
-              quiet_sidekiq(pid_file)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  desc 'Stop sidekiq'
-  task :stop do
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        if test("[ -d #{release_path} ]")
-          each_pid_file_with_index(reverse: true) do |pid_file, idx|
-            if pid_file_exists?(pid_file) && process_exists?(pid_file)
-              stop_sidekiq(pid_file)
-            end
-          end
-        end
-      end
-    end
-  end
-
-  desc 'Start sidekiq'
-  task :start do
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        each_pid_file_with_index do |pid_file, idx|
-          unless pid_file_exists?(pid_file) && process_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
-          end
-        end
-      end
-    end
-  end
-
-  desc 'Restart sidekiq'
-  task :restart do
-    invoke! 'sidekiq:stop'
-    invoke 'sidekiq:start'
-  end
-
-  desc 'Rolling-restart sidekiq'
-  task :rolling_restart do
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        each_pid_file_with_index(true) do |pid_file, idx|
-          if pid_file_exists?(pid_file) && process_exists?(pid_file)
-            stop_sidekiq(pid_file)
-          end
-          start_sidekiq(pid_file, idx)
-        end
-      end
-    end
-  end
-
-  desc 'Delete any pid file not in use'
-  task :cleanup do
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        each_pid_file_with_index do |pid_file, idx|
-          if pid_file_exists?(pid_file)
-            execute "rm #{pid_file}" unless process_exists?(pid_file)
-          end
-        end
-      end
-    end
-  end
-
-  # TODO : Don't start if all processes are off, raise warning.
-  desc 'Respawn missing sidekiq processes'
-  task :respawn do
-    invoke 'sidekiq:cleanup'
-    on roles fetch(:sidekiq_role) do |role|
-      switch_user(role) do
-        each_pid_file_with_index do |pid_file, idx|
-          unless pid_file_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
-          end
-        end
-      end
-    end
   end
 
   def switch_user(role, &block)
