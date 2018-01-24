@@ -1,9 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## 1.0.0
 
 - Prepend underscore before service name index @Tensho
 - Convert CHANGELOG to Markdown @Tensho
+- Drop support for capistrano 2.0 @Tensho
+- *BREAKING CHANGE* If people used custom monit template, they should adjust it to use pid_files variable instead of processes_pids. @Tensho
 
 ## 0.20.0
 
