@@ -30,7 +30,7 @@ end
 
 namespace :sidekiq do
   def for_each_process(reverse = false, &block)
-    pids = processes_pids
+    pids = pid_files
     pids.reverse! if reverse
     pids.each_with_index do |pid_file, idx|
       within release_path do
@@ -39,18 +39,13 @@ namespace :sidekiq do
     end
   end
 
-  def processes_pids
-    pids = []
+  def pid_files
     sidekiq_roles = Array(fetch(:sidekiq_role))
-    sidekiq_roles.each do |role|
-      next unless host.roles.include?(role)
+    sidekiq_roles.select! { |role| host.roles.include?(role) }
+    sidekiq_roles.flat_map do |role|
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
-      processes.times do |idx|
-        pids.push fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
-      end
+      Array.new(processes) { |idx| fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid") }
     end
-
-    pids
   end
 
   def pid_process_exists?(pid_file)
