@@ -29,10 +29,10 @@ namespace :deploy do
 end
 
 namespace :sidekiq do
-  def for_each_process(reverse = false, &block)
-    pids = pid_files
-    pids.reverse! if reverse
-    pids.each_with_index do |pid_file, idx|
+  def for_each_process(reverse: false, &block)
+    _pid_files = pid_files
+    _pid_files.reverse! if reverse
+    _pid_files.each_with_index do |pid_file, idx|
       within release_path do
         yield(pid_file, idx)
       end
@@ -109,8 +109,8 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
-        if test("[ -d #{release_path} ]") # fixes #11
-          for_each_process(true) do |pid_file, idx|
+        if test("[ -d #{release_path} ]")
+          for_each_process(reverse: true) do |pid_file, idx|
             if pid_process_exists?(pid_file)
               quiet_sidekiq(pid_file)
             end
@@ -125,7 +125,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         if test("[ -d #{release_path} ]")
-          for_each_process(true) do |pid_file, idx|
+          for_each_process(reverse: true) do |pid_file, idx|
             if pid_process_exists?(pid_file)
               stop_sidekiq(pid_file)
             end
