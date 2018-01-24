@@ -27,7 +27,7 @@ namespace :sidekiq do
 
     desc 'Config Sidekiq monit-service'
     task :config do
-      on roles(fetch(:sidekiq_role)) do |role|
+      on roles(fetch(:sidekiq_roles)) do |role|
         @role = role
         upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
 
@@ -40,7 +40,7 @@ namespace :sidekiq do
 
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
@@ -54,7 +54,7 @@ namespace :sidekiq do
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
@@ -67,7 +67,7 @@ namespace :sidekiq do
 
     desc 'Start Sidekiq monit-service'
     task :start do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
         end
@@ -76,7 +76,7 @@ namespace :sidekiq do
 
     desc 'Stop Sidekiq monit-service'
     task :stop do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
         end
@@ -85,7 +85,7 @@ namespace :sidekiq do
 
     desc 'Restart Sidekiq monit-service'
     task :restart do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
         end

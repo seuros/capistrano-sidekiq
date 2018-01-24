@@ -41,11 +41,10 @@ Configurable options, shown here with defaults:
 :sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
-:sidekiq_role => :app
+:sidekiq_roles => :app
 :sidekiq_processes => 1
 :sidekiq_options_per_process => nil
 :sidekiq_concurrency => nil
-:sidekiq_use_signals => false
 # sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
@@ -78,12 +77,12 @@ and `low`:
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
-## Different number of processes per host
+## Different number of processes per role
 
 You can configure how many processes you want to run on each host next way:
 
 ```ruby
-set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_roles, [:sidekiq_small, :sidekiq_big]
 set :sidekiq_small_processes, 1
 set :sidekiq_big_processes, 4
 server 'example-small.com', roles: [:sidekiq_small]
