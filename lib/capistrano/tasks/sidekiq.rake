@@ -48,12 +48,12 @@ namespace :sidekiq do
     end
   end
 
-  def pid_process_exists?(pid_file)
-    pid_file_exists?(pid_file) and test(*("kill -0 $( cat #{pid_file} )").split(' '))
-  end
-
   def pid_file_exists?(pid_file)
     test(*("[ -f #{pid_file} ]").split(' '))
+  end
+
+  def process_exists?(pid_file)
+    test(*("kill -0 $( cat #{pid_file} )").split(' '))
   end
 
   def stop_sidekiq(pid_file)
@@ -111,7 +111,7 @@ namespace :sidekiq do
       switch_user(role) do
         if test("[ -d #{release_path} ]")
           for_each_process(reverse: true) do |pid_file, idx|
-            if pid_process_exists?(pid_file)
+            if pid_file_exists?(pid_file) && process_exists?(pid_file)
               quiet_sidekiq(pid_file)
             end
           end
@@ -126,7 +126,7 @@ namespace :sidekiq do
       switch_user(role) do
         if test("[ -d #{release_path} ]")
           for_each_process(reverse: true) do |pid_file, idx|
-            if pid_process_exists?(pid_file)
+            if pid_file_exists?(pid_file) && process_exists?(pid_file)
               stop_sidekiq(pid_file)
             end
           end
@@ -140,7 +140,9 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+          unless pid_file_exists?(pid_file) && process_exists?(pid_file)
+            start_sidekiq(pid_file, idx)
+          end
         end
       end
     end
@@ -157,7 +159,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
+          if pid_file_exists?(pid_file) && process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
           start_sidekiq(pid_file, idx)
@@ -166,13 +168,13 @@ namespace :sidekiq do
     end
   end
 
-  # Delete any pid file not in use
+  desc 'Delete any pid file not in use'
   task :cleanup do
     on roles fetch(:sidekiq_role) do |role|
       switch_user(role) do
         for_each_process do |pid_file, idx|
           if pid_file_exists?(pid_file)
-            execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+            execute "rm #{pid_file}" unless process_exists?(pid_file)
           end
         end
       end
