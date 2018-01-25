@@ -1,2 +1,2 @@
 # load monit tasks
-load File.expand_path('../../tasks/monit.cap', __FILE__)
+load File.expand_path('../../tasks/monit.rake', __FILE__)

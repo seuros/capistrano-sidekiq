@@ -9,11 +9,13 @@ namespace :load do
     set :sidekiq_role, -> { :app }
     set :sidekiq_processes, -> { 1 }
     set :sidekiq_options_per_process, -> { nil }
-    # Rbenv and RVM integration
+    set :sidekiq_user, -> { nil }
+    # Rbenv, Chruby, and RVM integration
     set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
     set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
-
-    set :sidekiq_monit_templates_path, -> { 'config/deploy/templates' }
+    set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
+    # Bundler integration
+    set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
   end
 end
 
@@ -44,9 +46,7 @@ namespace :sidekiq do
       next unless host.roles.include?(role)
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       processes.times do |idx|
-        pids.push (idx.zero? && processes <= 1) ?
-                      fetch(:sidekiq_pid) :
-                      fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
+        pids.push fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid")
       end
     end
 
@@ -66,10 +66,10 @@ namespace :sidekiq do
       if fetch(:sidekiq_use_signals)
         background "kill -TERM `cat #{pid_file}`"
       else
-        background :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+        background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
       end
     else
-      execute :bundle, :exec, :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     end
   end
 
@@ -78,7 +78,7 @@ namespace :sidekiq do
       background "kill -USR1 `cat #{pid_file}`"
     else
       begin
-        execute :bundle, :exec, :sidekiqctl, 'quiet', "#{pid_file}"
+        execute :sidekiqctl, 'quiet', "#{pid_file}"
       rescue SSHKit::Command::Failed
         # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
         warn 'sidekiqctl not found (ignore if this is the first deploy)'
@@ -119,9 +119,9 @@ namespace :sidekiq do
     end
 
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :bundle, :exec, :sidekiq, args.compact.join(' ')
+      background :sidekiq, args.compact.join(' ')
     else
-      execute :bundle, :exec, :sidekiq, args.compact.join(' ')
+      execute :sidekiq, args.compact.join(' ')
     end
   end
 
@@ -134,11 +134,13 @@ namespace :sidekiq do
 
   desc 'Quiet sidekiq (stop processing new tasks)'
   task :quiet do
-    on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]") # fixes #11
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            quiet_sidekiq(pid_file)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        if test("[ -d #{release_path} ]") # fixes #11
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              quiet_sidekiq(pid_file)
+            end
           end
         end
       end
@@ -147,22 +149,27 @@ namespace :sidekiq do
 
   desc 'Stop sidekiq'
   task :stop do
-    on roles fetch(:sidekiq_role) do
-      if test("[ -d #{release_path} ]")
-        for_each_process(true) do |pid_file, idx|
-          if pid_process_exists?(pid_file)
-            stop_sidekiq(pid_file)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        if test("[ -d #{release_path} ]")
+          for_each_process(true) do |pid_file, idx|
+            if pid_process_exists?(pid_file)
+              stop_sidekiq(pid_file)
+            end
           end
         end
       end
     end
+    Rake::Task["sidekiq:stop"].reenable
   end
 
   desc 'Start sidekiq'
   task :start do
-    on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        for_each_process do |pid_file, idx|
+          start_sidekiq(pid_file, idx) unless pid_process_exists?(pid_file)
+        end
       end
     end
   end
@@ -175,22 +182,26 @@ namespace :sidekiq do
 
   desc 'Rolling-restart sidekiq'
   task :rolling_restart do
-    on roles fetch(:sidekiq_role) do
-      for_each_process(true) do |pid_file, idx|
-        if pid_process_exists?(pid_file)
-          stop_sidekiq(pid_file)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        for_each_process(true) do |pid_file, idx|
+          if pid_process_exists?(pid_file)
+            stop_sidekiq(pid_file)
+          end
+          start_sidekiq(pid_file, idx)
         end
-        start_sidekiq(pid_file, idx)
       end
     end
   end
 
   # Delete any pid file not in use
   task :cleanup do
-    on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        if pid_file_exists?(pid_file)
-          execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        for_each_process do |pid_file, idx|
+          if pid_file_exists?(pid_file)
+            execute "rm #{pid_file}" unless pid_process_exists?(pid_file)
+          end
         end
       end
     end
@@ -200,13 +211,34 @@ namespace :sidekiq do
   desc 'Respawn missing sidekiq processes'
   task :respawn do
     invoke 'sidekiq:cleanup'
-    on roles fetch(:sidekiq_role) do
-      for_each_process do |pid_file, idx|
-        unless pid_file_exists?(pid_file)
-          start_sidekiq(pid_file, idx)
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        for_each_process do |pid_file, idx|
+          unless pid_file_exists?(pid_file)
+            start_sidekiq(pid_file, idx)
+          end
         end
       end
     end
+  end
+
+  def switch_user(role, &block)
+    su_user = sidekiq_user(role)
+    if su_user == role.user
+      block.call
+    else
+      as su_user do
+        block.call
+      end
+    end
+  end
+
+  def sidekiq_user(role)
+    properties = role.properties
+    properties.fetch(:sidekiq_user) ||               # local property for sidekiq only
+    fetch(:sidekiq_user) ||
+    properties.fetch(:run_as) || # global property across multiple capistrano gems
+    role.user
   end
 
   def upload_sidekiq_template(from, to, role)
