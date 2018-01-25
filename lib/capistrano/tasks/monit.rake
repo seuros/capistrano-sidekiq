@@ -73,27 +73,45 @@ namespace :sidekiq do
     
     desc 'Start Sidekiq monit-service'
     task :start do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
+      fetch(:sidekiq_role).each do |role|
+        on roles(role) do
+          fetch(:"#{role}_processes").times do |idx|
+            begin
+              sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
+            rescue
+              # no worries here
+            end
+          end
         end
       end
     end
 
     desc 'Stop Sidekiq monit-service'
     task :stop do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
+      fetch(:sidekiq_role).each do |role|
+        on roles(role) do
+          fetch(:"#{role}_processes").times do |idx|
+            begin
+              sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
+            rescue
+              # no worries here
+            end
+          end
         end
       end
     end
 
     desc 'Restart Sidekiq monit-service'
     task :restart do
-      on roles(fetch(:sidekiq_role)) do
-        fetch(:sidekiq_processes).times do |idx|
-          sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
+      fetch(:sidekiq_role).each do |role|
+        on roles(role) do
+          fetch(:"#{role}_processes").times do |idx|
+            begin
+              sudo_if_needed "#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
+            rescue
+              # no worries here
+            end
+          end
         end
       end
     end
