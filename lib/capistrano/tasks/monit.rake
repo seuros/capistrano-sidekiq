@@ -41,11 +41,11 @@ namespace :sidekiq do
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
       on roles(fetch(:sidekiq_roles)) do
+        invoke 'sidekiq:monit:config'
         fetch(:sidekiq_processes).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
           rescue
-            invoke 'sidekiq:monit:config'
             sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
           end
         end
