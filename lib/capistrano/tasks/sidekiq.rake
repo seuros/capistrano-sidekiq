@@ -140,7 +140,7 @@ namespace :sidekiq do
   end
 
   def pid_files
-    sidekiq_roles = Array(fetch(:sidekiq_roles))
+    sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
     sidekiq_roles.select! { |role| host.roles.include?(role) }
     sidekiq_roles.flat_map do |role|
       processes = fetch(:"#{ role }_processes") ||
