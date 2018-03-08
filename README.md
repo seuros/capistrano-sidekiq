@@ -59,6 +59,8 @@ Configurable options, shown here with defaults:
 :sidekiq_user => nil #user to run sidekiq as
 ```
 
+## Known issues with Capistrano 3
+
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
 ```ruby
 set :pty,  false
