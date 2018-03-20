@@ -41,20 +41,25 @@ Configurable options, shown here with defaults:
 :sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
-:sidekiq_role => :app
+:sidekiq_roles => :app
 :sidekiq_processes => 1
 :sidekiq_options_per_process => nil
 :sidekiq_concurrency => nil
+# sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
 :sidekiq_monit_use_sudo => true
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
-:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}"
+:sidekiq_monit_group => nil
+:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '') 
+
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
 :sidekiq_user => nil #user to run sidekiq as
 ```
+
+## Known issues with Capistrano 3
 
 There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
 ```ruby
@@ -74,12 +79,12 @@ and `low`:
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
-## Different number of processes per host
+## Different number of processes per role
 
 You can configure how many processes you want to run on each host next way:
 
 ```ruby
-set :sidekiq_role, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_roles, [:sidekiq_small, :sidekiq_big]
 set :sidekiq_small_processes, 1
 set :sidekiq_big_processes, 4
 server 'example-small.com', roles: [:sidekiq_small]
