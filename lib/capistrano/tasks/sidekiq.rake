@@ -89,7 +89,7 @@ namespace :sidekiq do
   task :rolling_restart do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
-        each_process_with_index(true) do |pid_file, idx|
+        each_process_with_index(reverse: true) do |pid_file, idx|
           if pid_file_exists?(pid_file) && process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
