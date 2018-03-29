@@ -11,11 +11,11 @@ namespace :load do
     set :sidekiq_options_per_process, nil
     set :sidekiq_user, nil
     # Rbenv, Chruby, and RVM integration
-    set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
-    set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w(sidekiq sidekiqctl))
-    set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
+    set :rbenv_map_bins, fetch(:rbenv_map_bins).to_a.concat(%w[sidekiq sidekiqctl])
+    set :rvm_map_bins, fetch(:rvm_map_bins).to_a.concat(%w[sidekiq sidekiqctl])
+    set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w[sidekiq sidekiqctl])
     # Bundler integration
-    set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
+    set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w[sidekiq sidekiqctl])
     # Init system integration
     set :init_system, -> { nil }
     # systemd integration
@@ -52,7 +52,7 @@ namespace :sidekiq do
           execute :systemctl, "--user", "reload", fetch(:service_unit_name), raise_on_non_zero_exit: false
         else
           if test("[ -d #{release_path} ]")
-            each_process_with_index(reverse: true) do |pid_file, idx|
+            each_process_with_index(reverse: true) do |pid_file, _idx|
               if pid_file_exists?(pid_file) && process_exists?(pid_file)
                 quiet_sidekiq(pid_file)
               end
@@ -72,7 +72,7 @@ namespace :sidekiq do
           execute :systemctl, "--user", "stop", fetch(:service_unit_name)
         else
           if test("[ -d #{release_path} ]")
-            each_process_with_index(reverse: true) do |pid_file, idx|
+            each_process_with_index(reverse: true) do |pid_file, _idx|
               if pid_file_exists?(pid_file) && process_exists?(pid_file)
                 stop_sidekiq(pid_file)
               end
@@ -89,7 +89,7 @@ namespace :sidekiq do
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
-          execute :systemctl, "--user", "start", fetch(:service_unit_name)
+          execute :systemctl, '--user', 'start', fetch(:service_unit_name)
         else
           each_process_with_index do |pid_file, idx|
             unless pid_file_exists?(pid_file) && process_exists?(pid_file)
@@ -125,11 +125,10 @@ namespace :sidekiq do
   task :cleanup do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
-        each_process_with_index do |pid_file, idx|
+        each_process_with_index do |pid_file, _idx|
           unless process_exists?(pid_file)
-            if pid_file_exists?(pid_file)
-              execute "rm #{pid_file}"
-            end
+            next unless pid_file_exists?(pid_file)
+            execute "rm #{pid_file}"
           end
         end
       end
@@ -143,9 +142,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index do |pid_file, idx|
-          unless pid_file_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
-          end
+          start_sidekiq(pid_file, idx) unless pid_file_exists?(pid_file)
         end
       end
     end
@@ -176,9 +173,9 @@ namespace :sidekiq do
   end
 
   def each_process_with_index(reverse: false)
-    _pid_files = pid_files
-    _pid_files.reverse! if reverse
-    _pid_files.each_with_index do |pid_file, idx|
+    pid_file_list = pid_files
+    pid_file_list.reverse! if reverse
+    pid_file_list.each_with_index do |pid_file, idx|
       within release_path do
         yield(pid_file, idx)
       end
@@ -209,7 +206,7 @@ namespace :sidekiq do
   end
 
   def pid_files
-    sidekiq_roles = Array(fetch(:sidekiq_roles))
+    sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
     sidekiq_roles.select! { |role| host.roles.include?(role) }
     sidekiq_roles.flat_map do |role|
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
@@ -227,7 +224,7 @@ namespace :sidekiq do
 
   def quiet_sidekiq(pid_file)
     begin
-      execute :sidekiqctl, 'quiet', "#{pid_file}"
+      execute :sidekiqctl, 'quiet', pid_file.to_s
     rescue SSHKit::Command::Failed
       # If gems are not installed (first deploy) and sidekiq_default_hooks is active
       warn 'sidekiqctl not found (ignore if this is the first deploy)'
@@ -235,7 +232,7 @@ namespace :sidekiq do
   end
 
   def stop_sidekiq(pid_file)
-    execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+    execute :sidekiqctl, 'stop', pid_file.to_s, fetch(:sidekiq_timeout)
   end
 
   def start_sidekiq(pid_file, idx = 0)
@@ -251,7 +248,7 @@ namespace :sidekiq do
     end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
-    if process_options = fetch(:sidekiq_options_per_process)
+    if (process_options = fetch(:sidekiq_options_per_process))
       args.push process_options[idx]
     end
     # use sidekiq_options for special options
@@ -267,13 +264,13 @@ namespace :sidekiq do
     execute :sidekiq, args.compact.join(' ')
   end
 
-  def switch_user(role, &block)
+  def switch_user(role)
     su_user = sidekiq_user(role)
     if su_user == role.user
-      block.call
+      yield
     else
       as su_user do
-        block.call
+        yield
       end
     end
   end
@@ -281,8 +278,8 @@ namespace :sidekiq do
   def sidekiq_user(role)
     properties = role.properties
     properties.fetch(:sidekiq_user) || # local property for sidekiq only
-    fetch(:sidekiq_user) ||
-    properties.fetch(:run_as) || # global property across multiple capistrano gems
-    role.user
+      fetch(:sidekiq_user) ||
+      properties.fetch(:run_as) || # global property across multiple capistrano gems
+      role.user
   end
 end
