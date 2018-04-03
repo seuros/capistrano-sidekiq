@@ -26,6 +26,9 @@ namespace :deploy do
   after :publishing, :restart_sidekiq do
     invoke 'sidekiq:restart' if fetch(:sidekiq_default_hooks)
   end
+  after :failed, :restart_sidekiq do
+    invoke 'sidekiq:restart' if fetch(:sidekiq_default_hooks)
+  end
 end
 
 namespace :sidekiq do
