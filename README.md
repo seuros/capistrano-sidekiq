@@ -100,6 +100,26 @@ server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
 
+## Integration with systemd
+
+Set init system to systemd in the cap deploy config:
+
+```ruby
+set :init_system, :systemd
+```
+
+Install systemd.service template file and enable the service with:
+
+```
+bundle exec cap sidekiq:install
+```
+
+Default name for the service file is `sidekiq-stage.service`. This can be changed as needed, for example:
+
+```ruby
+set :service_unit_name, "sidekiq-#{fetch(:application)}-#{fetch(:stage)}.service"
+```
+
 ## Customizing the monit sidekiq templates
 
 If you need change some config in redactor, you can

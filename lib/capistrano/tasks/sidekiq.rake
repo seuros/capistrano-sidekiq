@@ -16,6 +16,10 @@ namespace :load do
     set :chruby_map_bins, fetch(:chruby_map_bins).to_a.concat(%w{ sidekiq sidekiqctl })
     # Bundler integration
     set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w(sidekiq sidekiqctl))
+    # Init system integration
+    set :init_system, -> { nil }
+    # systemd integration
+    set :service_unit_name, "sidekiq-#{fetch(:stage)}.service"
   end
 end
 
@@ -43,10 +47,15 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
-        if test("[ -d #{release_path} ]")
-          each_process_with_index(reverse: true) do |pid_file, idx|
-            if pid_file_exists?(pid_file) && process_exists?(pid_file)
-              quiet_sidekiq(pid_file)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user", "reload", fetch(:service_unit_name), raise_on_non_zero_exit: false
+        else
+          if test("[ -d #{release_path} ]")
+            each_process_with_index(reverse: true) do |pid_file, idx|
+              if pid_file_exists?(pid_file) && process_exists?(pid_file)
+                quiet_sidekiq(pid_file)
+              end
             end
           end
         end
@@ -58,10 +67,15 @@ namespace :sidekiq do
   task :stop do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
-        if test("[ -d #{release_path} ]")
-          each_process_with_index(reverse: true) do |pid_file, idx|
-            if pid_file_exists?(pid_file) && process_exists?(pid_file)
-              stop_sidekiq(pid_file)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user", "stop", fetch(:service_unit_name)
+        else
+          if test("[ -d #{release_path} ]")
+            each_process_with_index(reverse: true) do |pid_file, idx|
+              if pid_file_exists?(pid_file) && process_exists?(pid_file)
+                stop_sidekiq(pid_file)
+              end
             end
           end
         end
@@ -73,9 +87,14 @@ namespace :sidekiq do
   task :start do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
-        each_process_with_index do |pid_file, idx|
-          unless pid_file_exists?(pid_file) && process_exists?(pid_file)
-            start_sidekiq(pid_file, idx)
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user", "start", fetch(:service_unit_name)
+        else
+          each_process_with_index do |pid_file, idx|
+            unless pid_file_exists?(pid_file) && process_exists?(pid_file)
+              start_sidekiq(pid_file, idx)
+            end
           end
         end
       end
@@ -132,6 +151,30 @@ namespace :sidekiq do
     end
   end
 
+  task :install do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        case fetch(:init_system)
+        when :systemd
+          create_systemd_template
+          execute :systemctl, "--user", "enable", fetch(:service_unit_name)
+        end
+      end
+    end
+  end
+
+  task :uninstall do
+    on roles fetch(:sidekiq_role) do |role|
+      switch_user(role) do
+        case fetch(:init_system)
+        when :systemd
+          execute :systemctl, "--user", "disable", fetch(:service_unit_name)
+          execute :rm, File.join(fetch(:service_unit_path, fetch_systemd_unit_path),fetch(:service_unit_name))
+        end
+      end
+    end
+  end
+
   def each_process_with_index(reverse: false)
     _pid_files = pid_files
     _pid_files.reverse! if reverse
@@ -140,6 +183,29 @@ namespace :sidekiq do
         yield(pid_file, idx)
       end
     end
+  end
+
+  def fetch_systemd_unit_path
+    home_dir = capture :pwd
+    File.join(home_dir, ".config", "systemd", "user")
+  end
+
+  def create_systemd_template
+    search_paths = [
+      File.expand_path(
+        File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
+        __FILE__
+      ),
+    ]
+    template_path = search_paths.detect {|path| File.file?(path)}
+    template = File.read(template_path)
+    systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
+    execute :mkdir, "-p", systemd_path
+    upload!(
+      StringIO.new(ERB.new(template).result(binding)),
+      "#{systemd_path}/#{fetch :service_unit_name}"
+    )
+    execute :systemctl, "--user", "daemon-reload"
   end
 
   def pid_files
