@@ -21,12 +21,12 @@ And then execute:
 
 
 ## Usage
+
 ```ruby
 # Capfile
 require 'capistrano/sidekiq'
-require 'capistrano/sidekiq/monit' #to require monit tasks # Only for capistrano3
+require 'capistrano/sidekiq/monit' # optional require of the monit tasks
 ```
-
 
 Configurable options, shown here with defaults:
 
@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_roles => :app
@@ -46,13 +46,13 @@ Configurable options, shown here with defaults:
 :sidekiq_options_per_process => nil
 :sidekiq_concurrency => nil
 # sidekiq monit
+:monit_bin => '/usr/bin/monit'
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
 :sidekiq_monit_use_sudo => true
-:monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_monit_group => nil
-:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '') 
+:sidekiq_monit_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '')
 
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5

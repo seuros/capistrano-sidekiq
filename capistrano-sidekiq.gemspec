@@ -5,7 +5,7 @@ require 'capistrano/sidekiq/version'
 
 Gem::Specification.new do |spec|
   spec.name = 'capistrano-sidekiq'
-  spec.version = Capistrano::SidekiqVERSION
+  spec.version = Capistrano::Sidekiq::VERSION
   spec.authors = ['Abdelkader Boudih']
   spec.email = ['terminale@gmail.com']
   spec.summary = %q{Sidekiq integration for Capistrano}
