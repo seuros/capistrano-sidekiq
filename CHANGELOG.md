@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1
+- Add deploy failure handling @phillbaker
+
 ## 1.0.0
 
 - Prepend underscore before service name index @Tensho
