@@ -3,6 +3,7 @@
 ## 1.0.1
 - Add deploy failure handling @phillbaker
 - Support custom monit filename @zocoi
+- Systemd Integration @baierjan
 
 ## 1.0.0
 
