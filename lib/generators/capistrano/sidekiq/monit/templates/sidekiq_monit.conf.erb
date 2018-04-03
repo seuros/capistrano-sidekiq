@@ -6,5 +6,4 @@ check process <%= sidekiq_monit_service_name(idx) %>
 
   stop program = "/bin/su - <%= sidekiq_user(@role) %> -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:sidekiqctl] %> stop <%= pid_file %>'" with timeout <%= fetch(:sidekiq_timeout).to_i + 10  %> seconds
   group <%= fetch(:sidekiq_monit_group, fetch(:application)) %>-sidekiq
-
 <% end %>
