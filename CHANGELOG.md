@@ -2,6 +2,7 @@
 
 ## 1.0.1
 - Add deploy failure handling @phillbaker
+- Support custom monit filename @zocoi
 
 ## 1.0.0
 
