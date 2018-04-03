@@ -6,7 +6,7 @@ namespace :load do
     set :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:stage))) }
     set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
     set :sidekiq_timeout, 10
-    set :sidekiq_roles, :app
+    set :sidekiq_roles, fetch(:sidekiq_role, :app)
     set :sidekiq_processes, 1
     set :sidekiq_options_per_process, nil
     set :sidekiq_user, nil

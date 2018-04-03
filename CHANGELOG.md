@@ -4,6 +4,7 @@
 - Add deploy failure handling @phillbaker
 - Support custom monit filename @zocoi
 - Systemd Integration @baierjan
+- Fix regression in sidekiq_roles variable
 
 ## 1.0.0
 
