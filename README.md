@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_roles => :app
@@ -52,7 +52,7 @@ Configurable options, shown here with defaults:
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_monit_group => nil
-:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '') 
+:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '')
 
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
@@ -87,6 +87,23 @@ and `low`:
 ```ruby
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
+
+In addition, you can define a diferent schema per role:
+```ruby
+set :sidekiq_roles, [:web, :mailers, :async, :support]
+set :sidekiq_config_files_per_role, { web: ["sidekiq_web"],
+                                      mailers: ["sidekiq_mailers", "sidekiq_mailers_collect"],
+                                      async: ["sidekiq_paperclip"],
+                                      support: ["sidekiq_support"] }
+
+server '192.168.1.3', user: fetch(:user), roles: [:web, :mailers, :async]
+server '192.168.1.4', user: fetch(:user), roles: [:support, :async]
+```
+In this case, we're going to define multiple config files: `sidekiq_web.yml`, `sidekiq_mailers`....
+All of them are defined inside of `config` directory (i.ex: `config/sidekiq_web.yml`)
+
+each role can define diferent process, for example `mailers` role.
+`Mailers` role should execute a process with config file `sidekiq_mailers.yml` and other process with config file `sidekiq_mailers_collect`
 
 ## Different number of processes per role
 

@@ -209,8 +209,10 @@ namespace :sidekiq do
     sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
     sidekiq_roles.select! { |role| host.roles.include?(role) }
     sidekiq_roles.flat_map do |role|
-      processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
-      Array.new(processes) { |idx| fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid") }
+      processes = fetch(:"#{ role }_processes") ||
+                  fetch(:sidekiq_config_files_per_role)&.dig(role)&.size ||
+                  fetch(:sidekiq_processes)
+      Array.new(processes) { |idx| fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{role}-#{idx}.pid") }
     end
   end
 
@@ -246,10 +248,17 @@ namespace :sidekiq do
     Array(fetch(:sidekiq_queue)).each do |queue|
       args.push "--queue #{queue}"
     end
+
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if (process_options = fetch(:sidekiq_options_per_process))
       args.push process_options[idx]
+    end
+
+    if process_config_file = fetch(:sidekiq_config_files_per_role)
+      process_role = pid_file.match(/(\w+)-(\d).pid$/)[1].to_s.to_sym
+      process_id = pid_file.match(/(\w+)-(\d).pid$/)[2].to_i
+      args.push "-C #{release_path}/config/#{process_config_file[process_role][process_id]}.yml"
     end
     # use sidekiq_options for special options
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
