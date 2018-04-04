@@ -38,7 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_roles => :app
@@ -49,6 +49,7 @@ Configurable options, shown here with defaults:
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
 :sidekiq_monit_use_sudo => true
+:sidekiq_monit_configure => true
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_monit_group => nil
@@ -134,6 +135,12 @@ If your deploy user has no need in `sudo` for using monit, you can disable it as
 set :sidekiq_monit_use_sudo, false
 ```
 
+If monit is already configured on the server, then you can disable the
+configuration from the gem
+
+```ruby
+set :sidekiq_monit_configure, false
+```
 ## Contributing
 
 1. Fork it

@@ -3,6 +3,7 @@ namespace :load do
     set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
     set :sidekiq_monit_conf_file, "#{sidekiq_service_name}.conf"
     set :sidekiq_monit_use_sudo, true
+    set :sidekiq_monit_configure, true
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
     set :sidekiq_monit_templates_path, 'config/deploy/templates'
@@ -28,14 +29,16 @@ namespace :sidekiq do
 
     desc 'Config Sidekiq monit-service'
     task :config do
-      on roles(fetch(:sidekiq_roles)) do |role|
-        @role = role
-        upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
+      if fetch(:sidekiq_monit_configure)
+        on roles(fetch(:sidekiq_roles)) do |role|
+          @role = role
+          upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
 
-        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{fetch(:sidekiq_monit_conf_file)}"
-        sudo_if_needed mv_command
+          mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{fetch(:sidekiq_monit_conf_file)}"
+          sudo_if_needed mv_command
 
-        sudo_if_needed "#{fetch(:monit_bin)} reload"
+          sudo_if_needed "#{fetch(:monit_bin)} reload"
+        end
       end
     end
 
