@@ -149,7 +149,7 @@ namespace :sidekiq do
   end
 
   task :install do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
@@ -161,7 +161,7 @@ namespace :sidekiq do
   end
 
   task :uninstall do
-    on roles fetch(:sidekiq_role) do |role|
+    on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         case fetch(:init_system)
         when :systemd
