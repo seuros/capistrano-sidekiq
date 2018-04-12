@@ -27,20 +27,14 @@ namespace :deploy do
   before :starting, :check_sidekiq_hooks do
     invoke 'sidekiq:add_default_hooks' if fetch(:sidekiq_default_hooks)
   end
-  after :publishing, :restart_sidekiq do
-    invoke 'sidekiq:restart' if fetch(:sidekiq_default_hooks)
-  end
-  after :failed, :restart_sidekiq do
-    invoke 'sidekiq:restart' if fetch(:sidekiq_default_hooks)
-  end
 end
 
 namespace :sidekiq do
   task :add_default_hooks do
     after 'deploy:starting',  'sidekiq:quiet'
     after 'deploy:updated',   'sidekiq:stop'
-    after 'deploy:reverted',  'sidekiq:stop'
     after 'deploy:published', 'sidekiq:start'
+    after 'deploy:failed', 'sidekiq:restart'
   end
 
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
@@ -104,7 +98,7 @@ namespace :sidekiq do
   desc 'Restart sidekiq'
   task :restart do
     invoke! 'sidekiq:stop'
-    invoke 'sidekiq:start'
+    invoke! 'sidekiq:start'
   end
 
   desc 'Rolling-restart sidekiq'

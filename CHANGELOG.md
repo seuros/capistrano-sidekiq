@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.2
+- Fix deployment flow hooks
+
 ## 1.0.1
 - Add deploy failure handling @phillbaker
 - Support custom monit filename @zocoi
