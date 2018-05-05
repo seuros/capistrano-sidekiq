@@ -1,7 +1,7 @@
 namespace :load do
   task :defaults do
     set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
-    set :sidekiq_monit_conf_file, "#{sidekiq_service_name}.conf"
+    set :sidekiq_monit_conf_file, -> { "#{sidekiq_service_name}.conf" }
     set :sidekiq_monit_use_sudo, true
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
