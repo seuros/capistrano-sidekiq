@@ -120,6 +120,19 @@ Default name for the service file is `sidekiq-stage.service`. This can be change
 set :service_unit_name, "sidekiq-#{fetch(:application)}-#{fetch(:stage)}.service"
 ```
 
+## Integration with upstart
+
+Set init system to upstart in the cap deploy config:
+
+```ruby
+set :init_system, :upstart
+```
+
+Set upstart service name:
+```ruby
+set :upstart_service_name, 'sidekiq'
+```
+
 ## Customizing the monit sidekiq templates
 
 If you need change some config in redactor, you can
