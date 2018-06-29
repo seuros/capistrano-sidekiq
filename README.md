@@ -100,6 +100,18 @@ server 'example-small.com', roles: [:sidekiq_small]
 server 'example-big.com', roles: [:sidekiq_big]
 ```
 
+## Different configuration files per role
+
+You can configure a different configuration file per role, all the process in this role will use the same file.
+
+```ruby
+set :sidekiq_roles, [:sidekiq_small, :sidekiq_big]
+set :sidekiq_small_config, "#{current_path}/config/sidekiq/sidekiq_light_jobs.yml"
+set :sidekiq_common_config, "#{current_path}/config/sidekiq/sidekiq_heavy_jobs.yml"
+server 'example-small.com', roles: [:sidekiq_small]
+server 'example-big.com', roles: [:sidekiq_big]
+```
+
 ## Integration with systemd
 
 Set init system to systemd in the cap deploy config:
