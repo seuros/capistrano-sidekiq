@@ -20,6 +20,7 @@ namespace :load do
     set :init_system, -> { nil }
     # systemd integration
     set :service_unit_name, "sidekiq-#{fetch(:stage)}.service"
+    set :upstart_service_name, "sidekiq"
   end
 end
 
@@ -44,6 +45,8 @@ namespace :sidekiq do
         case fetch(:init_system)
         when :systemd
           execute :systemctl, "--user", "reload", fetch(:service_unit_name), raise_on_non_zero_exit: false
+        when :upstart
+          sudo :service, fetch(:upstart_service_name), :reload
         else
           if test("[ -d #{release_path} ]")
             each_process_with_index(reverse: true) do |pid_file, _idx|
@@ -64,6 +67,8 @@ namespace :sidekiq do
         case fetch(:init_system)
         when :systemd
           execute :systemctl, "--user", "stop", fetch(:service_unit_name)
+        when :upstart
+          sudo :service, fetch(:upstart_service_name), :stop
         else
           if test("[ -d #{release_path} ]")
             each_process_with_index(reverse: true) do |pid_file, _idx|
@@ -84,6 +89,8 @@ namespace :sidekiq do
         case fetch(:init_system)
         when :systemd
           execute :systemctl, '--user', 'start', fetch(:service_unit_name)
+        when :upstart
+          sudo :service, fetch(:upstart_service_name), :start
         else
           each_process_with_index do |pid_file, idx|
             unless pid_file_exists?(pid_file) && process_exists?(pid_file)
