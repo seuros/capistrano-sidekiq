@@ -85,6 +85,7 @@ This example should boot the first process with the queue `high` and the second 
 and `low`:
 
 ```ruby
+set :sidekiq_processes, 2
 set :sidekiq_options_per_process, ["--queue high", "--queue default --queue low"]
 ```
 
