@@ -33,6 +33,7 @@ Configurable options, shown here with defaults:
 ```ruby
 :sidekiq_default_hooks => true
 :sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') # ensure this path exists in production before deploying.
+:sidekiq_path => { release_path.join('server') } # if you have a monorepo with ruby application in a separate directory.
 :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
 :sidekiq_options => nil
