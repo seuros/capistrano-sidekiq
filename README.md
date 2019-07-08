@@ -108,6 +108,12 @@ Set init system to systemd in the cap deploy config:
 set :init_system, :systemd
 ```
 
+Enable lingering for systemd user account
+
+```
+loginctl enable-linger USERACCOUNT
+```
+
 Install systemd.service template file and enable the service with:
 
 ```
