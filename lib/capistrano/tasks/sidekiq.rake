@@ -19,7 +19,7 @@ namespace :load do
     # Init system integration
     set :init_system, nil
     # systemd integration
-    set :service_unit_name, "sidekiq-#{fetch(:stage)}.service"
+    set :service_unit_name, "sidekiq.service"
     set :upstart_service_name, "sidekiq"
   end
 end

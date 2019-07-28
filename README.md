@@ -114,7 +114,7 @@ Install systemd.service template file and enable the service with:
 bundle exec cap sidekiq:install
 ```
 
-Default name for the service file is `sidekiq-stage.service`. This can be changed as needed, for example:
+Default name for the service file is `sidekiq.service`. This can be changed as needed, for example:
 
 ```ruby
 set :service_unit_name, "sidekiq-#{fetch(:application)}-#{fetch(:stage)}.service"
