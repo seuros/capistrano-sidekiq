@@ -147,6 +147,12 @@ If your deploy user has no need in `sudo` for using monit, you can disable it as
 set :sidekiq_monit_use_sudo, false
 ```
 
+## TODO
+
+- Make Rails specific code optional
+  - `Capistrano::Sidekiq::Monit::Generators::TemplateGenerator`
+  - `sidekiq.service.capistrano.erb`
+
 ## Contributing
 
 1. Fork it
