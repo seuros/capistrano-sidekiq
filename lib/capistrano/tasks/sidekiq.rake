@@ -17,7 +17,7 @@ namespace :load do
     # Bundler integration
     set :bundle_bins, fetch(:bundle_bins).to_a.concat(%w[sidekiq sidekiqctl])
     # Init system integration
-    set :init_system, -> { nil }
+    set :init_system, nil
     # systemd integration
     set :service_unit_name, "sidekiq-#{fetch(:stage)}.service"
     set :upstart_service_name, "sidekiq"
@@ -35,7 +35,7 @@ namespace :sidekiq do
     after 'deploy:starting',  'sidekiq:quiet'
     after 'deploy:updated',   'sidekiq:stop'
     after 'deploy:published', 'sidekiq:start'
-    after 'deploy:failed', 'sidekiq:restart'
+    after 'deploy:failed',    'sidekiq:restart'
   end
 
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
