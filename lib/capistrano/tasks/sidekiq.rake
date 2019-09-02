@@ -237,9 +237,13 @@ namespace :sidekiq do
   end
 
   def start_sidekiq(pid_file, idx = 0)
+    execute :sidekiq, execute_args(pid_file: pid_file, idx: idx, daemon: true)
+  end
+
+  def execute_args(options = {})
     args = []
-    args.push "--index #{idx}"
-    args.push "--pidfile #{pid_file}"
+    args.push "--index #{options[:idx]}" if options[:idx]
+    args.push "--pidfile #{options[:pid_file]}" if options[:pid_file]
     args.push "--environment #{fetch(:sidekiq_env)}"
     args.push "--logfile #{fetch(:sidekiq_log)}" if fetch(:sidekiq_log)
     args.push "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
@@ -250,19 +254,21 @@ namespace :sidekiq do
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if (process_options = fetch(:sidekiq_options_per_process))
-      args.push process_options[idx]
+      args.push process_options[options[:idx]]
     end
     # use sidekiq_options for special options
     args.push fetch(:sidekiq_options) if fetch(:sidekiq_options)
 
-    if defined?(JRUBY_VERSION)
-      args.push '>/dev/null 2>&1 &'
-      warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
-    else
-      args.push '--daemon'
+    if options[:daemon]
+      if defined?(JRUBY_VERSION)
+        args.push '>/dev/null 2>&1 &'
+        warn 'Since JRuby doesn\'t support Process.daemon, Sidekiq will not be running as a daemon.'
+      else
+        args.push '--daemon'
+      end
     end
 
-    execute :sidekiq, args.compact.join(' ')
+    args.compact.join(' ')
   end
 
   def switch_user(role)
