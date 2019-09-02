@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+- Add upstart support
+- Fix monit service name
+
 ## 1.0.2
 - Fix deployment flow hooks
 
