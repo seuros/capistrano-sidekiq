@@ -177,7 +177,7 @@ namespace :sidekiq do
     pid_file_list = pid_files
     pid_file_list.reverse! if reverse
     pid_file_list.each_with_index do |pid_file, idx|
-      within release_path do
+      within fetch(:sidekiq_path, release_path) do
         yield(pid_file, idx)
       end
     end
