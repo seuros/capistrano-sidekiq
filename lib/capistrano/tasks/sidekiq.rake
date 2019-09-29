@@ -94,7 +94,7 @@ namespace :sidekiq do
         else
           each_process_with_index do |pid_file, idx|
             unless pid_file_exists?(pid_file) && process_exists?(pid_file)
-              start_sidekiq(pid_file, idx)
+              start_sidekiq(role, pid_file, idx)
             end
           end
         end
@@ -116,7 +116,7 @@ namespace :sidekiq do
           if pid_file_exists?(pid_file) && process_exists?(pid_file)
             stop_sidekiq(pid_file)
           end
-          start_sidekiq(pid_file, idx)
+          start_sidekiq(role, pid_file, idx)
         end
       end
     end
@@ -143,7 +143,7 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_roles) do |role|
       switch_user(role) do
         each_process_with_index do |pid_file, idx|
-          start_sidekiq(pid_file, idx) unless pid_file_exists?(pid_file)
+          start_sidekiq(role, pid_file, idx) unless pid_file_exists?(pid_file)
         end
       end
     end
@@ -236,7 +236,7 @@ namespace :sidekiq do
     execute :sidekiqctl, 'stop', pid_file.to_s, fetch(:sidekiq_timeout)
   end
 
-  def start_sidekiq(pid_file, idx = 0)
+  def start_sidekiq(role, pid_file, idx = 0)
     args = []
     args.push "--index #{idx}"
     args.push "--pidfile #{pid_file}"
@@ -247,7 +247,8 @@ namespace :sidekiq do
     Array(fetch(:sidekiq_queue)).each do |queue|
       args.push "--queue #{queue}"
     end
-    args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
+    config_file = sidekiq_config(role)
+    args.push "--config #{config_file}" if config_file
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     if (process_options = fetch(:sidekiq_options_per_process))
       args.push process_options[idx]
@@ -282,5 +283,11 @@ namespace :sidekiq do
       fetch(:sidekiq_user) ||
       properties.fetch(:run_as) || # global property across multiple capistrano gems
       role.user
+  end
+
+  def sidekiq_config(role)
+    sidekiq_roles = Array.wrap(fetch(:sidekiq_roles)) || []
+    role_name = role.roles_array.find { |role_name| sidekiq_roles.include?(role_name) }
+    fetch(:"#{role_name}_config") || fetch(:sidekiq_config)
   end
 end
