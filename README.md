@@ -37,7 +37,7 @@ Configurable options, shown here with defaults:
 :sidekiq_options => nil
 :sidekiq_require => nil
 :sidekiq_tag => nil
-:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this. 
+:sidekiq_config => nil # if you have a config/sidekiq.yml, do not forget to set this.
 :sidekiq_queue => nil
 :sidekiq_timeout => 10
 :sidekiq_roles => :app
@@ -51,7 +51,7 @@ Configurable options, shown here with defaults:
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_monit_group => nil
-:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '') 
+:sidekiq_service_name => "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}" + (index ? "_#{index}" : '')
 
 :sidekiq_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiq" # Only for capistrano2.5
 :sidekiqctl_cmd => "#{fetch(:bundle_cmd, "bundle")} exec sidekiqctl" # Only for capistrano2.5
@@ -112,6 +112,12 @@ Enable lingering for systemd user account
 
 ```
 loginctl enable-linger USERACCOUNT
+```
+
+If you use rbenv, you should also setup the correct bundler_path for the systemd.service template:
+
+```
+set :bundler_path, '$HOME/.rbenv/shims/bundler'
 ```
 
 Install systemd.service template file and enable the service with:
