@@ -114,7 +114,7 @@ Enable lingering for systemd user account
 loginctl enable-linger USERACCOUNT
 ```
 
-If you use rbenv, you should also setup the correct bundler_path for the systemd.service template:
+If you use rbenv, you should also setup the correct bundler_path for the systemd.service template (change the `$HOME` variable to a real path, because it should be absolute):
 
 ```
 set :bundler_path, '$HOME/.rbenv/shims/bundler'
