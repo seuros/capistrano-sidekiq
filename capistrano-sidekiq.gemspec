@@ -18,5 +18,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'capistrano', '>= 3.9.0'
-  spec.add_dependency 'sidekiq', '>= 3.4', "< 6.0"
+  spec.add_dependency 'capistrano-bundler'
+  spec.add_dependency 'sidekiq', '>= 6.0'
 end
