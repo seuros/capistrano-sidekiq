@@ -5,9 +5,10 @@ After=syslog.target network.target
 [Service]
 Type=simple
 WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
-ExecStart=<%= SSHKit.config.command_map[:bundler] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> -l <%= fetch(:sidekiq_log) %>
+ExecStart=<%= SSHKit.config.command_map[:bundler] %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
 ExecReload=/bin/kill -TSTP $MAINPID
 ExecStop=/bin/kill -TERM $MAINPID
+<%="StandardOutput=file:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
 <%="User=#{sidekiq_user}" if sidekiq_user %>
 <%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
 
