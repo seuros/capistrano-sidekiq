@@ -11,6 +11,10 @@ ExecStop=/bin/kill -TERM $MAINPID
 <%="User=#{sidekiq_user}" if sidekiq_user %>
 <%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
 
+<% fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
+  <%="Environment=#{environment_variable}" %>
+<% end %>
+
 RestartSec=1
 Restart=on-failure
 
