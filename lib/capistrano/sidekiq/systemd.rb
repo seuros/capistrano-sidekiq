@@ -3,6 +3,8 @@ module Capistrano
     def set_defaults
       set_if_empty :sidekiq_service_unit_name, 'sidekiq'
       set_if_empty :sidekiq_service_unit_user, :user # :system
+      set_if_empty :sidekiq_enable_lingering, true
+      set_if_empty :sidekiq_lingering_user, nil
     end
 
     def define_tasks
