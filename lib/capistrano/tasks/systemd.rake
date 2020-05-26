@@ -49,6 +49,7 @@ namespace :sidekiq do
           execute :sudo, :systemctl, "enable", fetch(:sidekiq_service_unit_name)
         else
           execute :systemctl, "--user", "enable", fetch(:sidekiq_service_unit_name)
+          execute :loginctl, "enable-linger", fetch(:sidekiq_lingering_user) if fetch(:sidekiq_enable_lingering)
         end
       end
     end

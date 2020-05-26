@@ -37,6 +37,12 @@ Configurable options, shown here with defaults:
 :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
 
+# sidekiq systemd options
+:sidekiq_service_unit_name => 'sidekiq'
+:sidekiq_service_unit_user => :user # :system
+:sidekiq_enable_lingering => true
+:sidekiq_lingering_user => nil
+
 # sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
 :sidekiq_monit_conf_dir => '/etc/monit/conf.d'
