@@ -8,8 +8,8 @@ WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
 ExecStart=<%= SSHKit.config.command_map[:bundler] %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
 ExecReload=/bin/kill -TSTP $MAINPID
 ExecStop=/bin/kill -TERM $MAINPID
-<%="StandardOutput=file:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
-<%="StandardError=file:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
+<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
+<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
 <%="User=#{sidekiq_user}" if sidekiq_user %>
 <%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
 
