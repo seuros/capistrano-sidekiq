@@ -113,7 +113,7 @@ namespace :sidekiq do
       backend.execute :sudo, :mv, "/tmp/#{fetch :sidekiq_service_unit_name}.service", "#{systemd_path}/#{fetch :sidekiq_service_unit_name}.service"
       backend.execute :sudo, :systemctl, "daemon-reload"
     else
-      backend.execute :sudo, :mv, "/tmp/#{fetch :sidekiq_service_unit_name}.service", "#{systemd_path}/#{fetch :sidekiq_service_unit_name}.service"
+      backend.execute :mv, "/tmp/#{fetch :sidekiq_service_unit_name}.service", "#{systemd_path}/#{fetch :sidekiq_service_unit_name}.service"
       backend.execute :systemctl, "--user", "daemon-reload"
     end
   end
