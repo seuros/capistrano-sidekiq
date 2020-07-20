@@ -1,11 +1,13 @@
 git_plugin = self
 
+SUPPRESS_FAILURE = %w[|| echo NO_RUNNING_INSTANCE].freeze
+
 namespace :sidekiq do
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        sudo :service, fetch(:sidekiq_service_unit_name), :reload
+        sudo :service, fetch(:sidekiq_service_unit_name), :reload, *SUPPRESS_FAILURE
       end
     end
   end
@@ -14,7 +16,7 @@ namespace :sidekiq do
   task :stop do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        sudo :service, fetch(:sidekiq_service_unit_name), :stop
+        sudo :service, fetch(:sidekiq_service_unit_name), :stop, *SUPPRESS_FAILURE
       end
     end
   end
