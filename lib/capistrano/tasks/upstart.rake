@@ -1,6 +1,6 @@
 git_plugin = self
 
-SUPPRESS_FAILURE = ['||', :echo, 'NO_RUNNING_INSTANCE'].freeze
+SUPPRESS_FAILURE = %w[|| echo NO_RUNNING_INSTANCE].freeze
 
 namespace :sidekiq do
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
