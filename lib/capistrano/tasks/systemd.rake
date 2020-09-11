@@ -132,4 +132,22 @@ namespace :sidekiq do
   def sidekiq_user
     fetch(:sidekiq_user, fetch(:run_as))
   end
+
+  def sidekiq_config
+    if fetch(:sidekiq_config)
+      "--config #{fetch(:sidekiq_config)}"
+    end
+  end
+
+  def sidekiq_concurrency
+    if fetch(:sidekiq_concurrency)
+      "--concurrency #{fetch(:sidekiq_concurrency)}"
+    end
+  end
+
+  def sidekiq_queues
+    Array(fetch(:sidekiq_queue)).map do |queue|
+      "--queue #{queue}"
+    end.join(' ')
+  end
 end
