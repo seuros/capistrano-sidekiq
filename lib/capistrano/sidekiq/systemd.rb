@@ -5,6 +5,7 @@ module Capistrano
       set_if_empty :sidekiq_service_unit_user, :user # :system
       set_if_empty :sidekiq_enable_lingering, true
       set_if_empty :sidekiq_lingering_user, nil
+      set_if_empty :sidekiq_service_templates_path, 'config/deploy/templates'
     end
 
     def define_tasks
