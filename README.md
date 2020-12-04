@@ -38,6 +38,7 @@ Configurable options, shown here with defaults:
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
 
 # sidekiq systemd options
+:sidekiq_service_templates_path => 'config/deploy/templates' # to be used if a custom template is needed (filaname should be #{fetch(:sidekiq_service_unit_name)}.service.capistrano.erb or sidekiq.service.capistrano.erb
 :sidekiq_service_unit_name => 'sidekiq'
 :sidekiq_service_unit_user => :user # :system
 :sidekiq_enable_lingering => true
