@@ -31,10 +31,19 @@ namespace :sidekiq do
   task :start do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, 'start', fetch(:sidekiq_service_unit_name)
-        else
-          execute :systemctl, '--user', 'start', fetch(:sidekiq_service_unit_name)
+        begin
+          if fetch(:sidekiq_service_unit_user) == :system
+            execute :sudo, :systemctl, 'start', fetch(:sidekiq_service_unit_name)
+          else
+            execute :systemctl, '--user', 'start', fetch(:sidekiq_service_unit_name)
+          end
+        rescue
+          invoke 'sidekiq:install'
+          if fetch(:sidekiq_service_unit_user) == :system
+            execute :sudo, :systemctl, 'start', fetch(:sidekiq_service_unit_name)
+          else
+            execute :systemctl, '--user', 'start', fetch(:sidekiq_service_unit_name)
+          end
         end
       end
     end
