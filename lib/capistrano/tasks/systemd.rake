@@ -19,9 +19,9 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
         if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, "stop", fetch(:sidekiq_service_unit_name)
+          execute :sudo, :systemctl, "stop", fetch(:sidekiq_service_unit_name), raise_on_non_zero_exit: false
         else
-          execute :systemctl, "--user", "stop", fetch(:sidekiq_service_unit_name)
+          execute :systemctl, "--user", "stop", fetch(:sidekiq_service_unit_name), raise_on_non_zero_exit: false
         end
       end
     end
