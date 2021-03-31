@@ -1,5 +1,7 @@
 module Capistrano
   class Sidekiq::Systemd < Capistrano::Plugin
+    include Sidekiq::Helpers
+
     def set_defaults
       set_if_empty :sidekiq_service_unit_name, 'sidekiq'
       set_if_empty :sidekiq_service_unit_user, :user # :system

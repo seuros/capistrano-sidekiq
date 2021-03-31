@@ -1,5 +1,7 @@
 module Capistrano
   class Sidekiq::Monit < Capistrano::Plugin
+    include Sidekiq::Helpers
+
     def set_defaults
       set_if_empty :monit_bin, '/usr/bin/monit'
       set_if_empty :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
