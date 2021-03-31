@@ -20,10 +20,10 @@ namespace :sidekiq do
       on roles(fetch(:sidekiq_roles)) do |role|
         @role = role
         git_plugin.upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
-  
+
         git_plugin.switch_user(role) do
           mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{fetch(:sidekiq_monit_conf_file)}"
-  
+
           git_plugin.sudo_if_needed mv_command
           git_plugin.sudo_if_needed "#{fetch(:monit_bin)} reload"
         end
@@ -117,7 +117,7 @@ namespace :sidekiq do
 
   def switch_user(role)
     su_user = sidekiq_user(role)
-    if su_user != role.user
+    if su_user == role.user
       yield
     else
       backend.as su_user do

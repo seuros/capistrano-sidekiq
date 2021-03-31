@@ -120,7 +120,7 @@ namespace :sidekiq do
 
   def switch_user(role)
     su_user = sidekiq_user
-    if su_user != role.user
+    if su_user == role.user
       yield
     else
       backend.as su_user do
