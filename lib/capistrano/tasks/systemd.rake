@@ -117,19 +117,4 @@ namespace :sidekiq do
       backend.execute :systemctl, "--user", "daemon-reload"
     end
   end
-
-  def switch_user(role)
-    su_user = sidekiq_user
-    if su_user != role.user
-      yield
-    else
-      backend.as su_user do
-        yield
-      end
-    end
-  end
-
-  def sidekiq_user
-    fetch(:sidekiq_user, fetch(:run_as))
-  end
 end
