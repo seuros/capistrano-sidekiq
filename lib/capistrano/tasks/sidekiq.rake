@@ -69,7 +69,7 @@ namespace :sidekiq do
         background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
       end
     else
-      execute :bundle, 'exec', 'sidekiqctl', 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
+      execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
     end
   end
 
@@ -78,7 +78,7 @@ namespace :sidekiq do
       background "kill -USR1 `cat #{pid_file}`"
     else
       begin
-        execute :bundle, 'exec', 'sidekiqctl', 'quiet', "#{pid_file}"
+        execute :sidekiqctl, 'quiet', "#{pid_file}"
       rescue SSHKit::Command::Failed
         # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
         warn 'sidekiqctl not found (ignore if this is the first deploy)'
@@ -121,7 +121,7 @@ namespace :sidekiq do
     if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
       background :sidekiq, args.compact.join(' ')
     else
-      execute :bundle, 'exec', 'sidekiq', args.compact.join(' ')
+      execute :sidekiq, args.compact.join(' ')
     end
   end
 
