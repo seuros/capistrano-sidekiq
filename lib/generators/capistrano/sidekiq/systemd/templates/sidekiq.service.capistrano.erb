@@ -5,7 +5,7 @@ After=syslog.target network.target
 [Service]
 Type=simple
 WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
-ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
+ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
 ExecReload=/bin/kill -TSTP $MAINPID
 ExecStop=/bin/kill -TERM $MAINPID
 <%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>

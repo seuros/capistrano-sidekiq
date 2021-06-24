@@ -120,4 +120,37 @@ namespace :sidekiq do
       backend.execute :systemctl, "--user", "daemon-reload"
     end
   end
+
+  def switch_user(role)
+    su_user = sidekiq_user
+    if su_user != role.user
+      yield
+    else
+      backend.as su_user do
+        yield
+      end
+    end
+  end
+
+  def sidekiq_user
+    fetch(:sidekiq_user, fetch(:run_as))
+  end
+
+  def sidekiq_config
+    if fetch(:sidekiq_config)
+      "--config #{fetch(:sidekiq_config)}"
+    end
+  end
+
+  def sidekiq_concurrency
+    if fetch(:sidekiq_concurrency)
+      "--concurrency #{fetch(:sidekiq_concurrency)}"
+    end
+  end
+
+  def sidekiq_queues
+    Array(fetch(:sidekiq_queue)).map do |queue|
+      "--queue #{queue}"
+    end.join(' ')
+  end
 end
