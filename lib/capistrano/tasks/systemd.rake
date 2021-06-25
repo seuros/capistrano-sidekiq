@@ -1,40 +1,35 @@
 git_plugin = self
 
 namespace :sidekiq do
+
+  standard_actions = {
+    start: 'Start sidekiq',
+    stop: 'Stop sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)',
+    status: 'Sidekiq status'
+  }
+  standard_actions.each do |action, description|
+    desc description
+    task action do
+      on roles fetch(:sidekiq_roles) do |role|
+        git_plugin.switch_user(role) do
+          if fetch(:sidekiq_service_unit_user) == :system
+            execute :sudo, :systemctl, action, git_plugin.sidekiq_service_unit_name
+          else
+            execute :systemctl, '--user', action, git_plugin.sidekiq_service_unit_name
+          end
+        end
+      end
+    end
+  end
+
   desc 'Quiet sidekiq (stop fetching new tasks from Redis)'
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
         if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, "reload", fetch(:sidekiq_service_unit_name), raise_on_non_zero_exit: false
+          execute :sudo, :systemctl, "reload", git_plugin.sidekiq_service_unit_name, raise_on_non_zero_exit: false
         else
-          execute :systemctl, "--user", "reload", fetch(:sidekiq_service_unit_name), raise_on_non_zero_exit: false
-        end
-      end
-    end
-  end
-
-  desc 'Stop sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)'
-  task :stop do
-    on roles fetch(:sidekiq_roles) do |role|
-      git_plugin.switch_user(role) do
-        if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, "stop", fetch(:sidekiq_service_unit_name)
-        else
-          execute :systemctl, "--user", "stop", fetch(:sidekiq_service_unit_name)
-        end
-      end
-    end
-  end
-
-  desc 'Start sidekiq'
-  task :start do
-    on roles fetch(:sidekiq_roles) do |role|
-      git_plugin.switch_user(role) do
-        if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, 'start', fetch(:sidekiq_service_unit_name)
-        else
-          execute :systemctl, '--user', 'start', fetch(:sidekiq_service_unit_name)
+          execute :systemctl, "--user", "reload", git_plugin.sidekiq_service_unit_name, raise_on_non_zero_exit: false
         end
       end
     end
@@ -46,9 +41,9 @@ namespace :sidekiq do
       git_plugin.switch_user(role) do
         git_plugin.create_systemd_template
         if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, "enable", fetch(:sidekiq_service_unit_name)
+          execute :sudo, :systemctl, :enable, git_plugin.sidekiq_service_unit_name
         else
-          execute :systemctl, "--user", "enable", fetch(:sidekiq_service_unit_name)
+          execute :systemctl, "--user", :enable, git_plugin.sidekiq_service_unit_name
           execute :loginctl, "enable-linger", fetch(:sidekiq_lingering_user) if fetch(:sidekiq_enable_lingering)
         end
       end
@@ -60,11 +55,11 @@ namespace :sidekiq do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
         if fetch(:sidekiq_service_unit_user) == :system
-          execute :sudo, :systemctl, "disable", fetch(:sidekiq_service_unit_name)
+          execute :sudo, :systemctl, "disable", git_plugin.sidekiq_service_unit_name
         else
-          execute :systemctl, "--user", "disable", fetch(:sidekiq_service_unit_name)
+          execute :systemctl, "--user", "disable", git_plugin.sidekiq_service_unit_name
         end
-        execute :rm, '-f', File.join(fetch(:service_unit_path, fetch_systemd_unit_path), fetch(:sidekiq_service_unit_name))
+        execute :sudo, :rm, '-f', File.join(fetch(:service_unit_path, git_plugin.fetch_systemd_unit_path), git_plugin.sidekiq_service_file_name)
       end
     end
   end
@@ -104,19 +99,19 @@ namespace :sidekiq do
   def create_systemd_template
     ctemplate = compiled_template
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
+    systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
 
     if fetch(:sidekiq_service_unit_user) == :user
       backend.execute :mkdir, "-p", systemd_path
     end
-    backend.upload!(
-        StringIO.new(ctemplate),
-        "/tmp/#{fetch :sidekiq_service_unit_name}.service"
-    )
+
+    temp_file_name = File.join('/tmp', sidekiq_service_file_name)
+    backend.upload!(StringIO.new(ctemplate), temp_file_name)
     if fetch(:sidekiq_service_unit_user) == :system
-      backend.execute :sudo, :mv, "/tmp/#{fetch :sidekiq_service_unit_name}.service", File.join(systemd_path, "#{fetch :sidekiq_service_unit_name}.service")
+      backend.execute :sudo, :mv, temp_file_name, systemd_file_name
       backend.execute :sudo, :systemctl, "daemon-reload"
     else
-      backend.execute :mv, "/tmp/#{fetch :sidekiq_service_unit_name}.service", File.join(systemd_path, "#{fetch :sidekiq_service_unit_name}.service")
+      backend.execute :mv, temp_file_name, systemd_file_name
       backend.execute :systemctl, "--user", "daemon-reload"
     end
   end
@@ -148,9 +143,22 @@ namespace :sidekiq do
     end
   end
 
+  def sidekiq_processes
+    fetch(:sidekiq_processes, 1)
+  end
+
   def sidekiq_queues
     Array(fetch(:sidekiq_queue)).map do |queue|
       "--queue #{queue}"
     end.join(' ')
   end
+
+  def sidekiq_service_file_name
+    "#{fetch :sidekiq_service_unit_name}@.service"
+  end
+
+  def sidekiq_service_unit_name
+    "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
+  end
+
 end
