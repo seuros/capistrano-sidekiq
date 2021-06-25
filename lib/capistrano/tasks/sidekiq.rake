@@ -11,10 +11,4 @@ namespace :sidekiq do
     after 'deploy:published', 'sidekiq:start'
     after 'deploy:failed', 'sidekiq:restart'
   end
-
-  desc 'Restart sidekiq'
-  task :restart do
-    invoke! 'sidekiq:stop'
-    invoke! 'sidekiq:start'
-  end
 end
