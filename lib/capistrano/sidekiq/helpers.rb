@@ -1,5 +1,6 @@
 module Capistrano
   module Sidekiq::Helpers
+
     def sidekiq_require
       if fetch(:sidekiq_require)
         "--require #{fetch(:sidekiq_require)}"
@@ -50,5 +51,6 @@ module Capistrano
           role.user
       end
     end
+
   end
 end
