@@ -36,7 +36,13 @@ Configurable options, shown here with defaults:
 :sidekiq_pid => File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid') # ensure this path exists in production before deploying.
 :sidekiq_env => fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
 :sidekiq_log => File.join(shared_path, 'log', 'sidekiq.log')
+# single config
 :sidekiq_config => 'config/sidekiq.yml'
+# per process config - process 1, process 2,... etc.
+:sidekiq_config => [
+    'config/sidekiq_config1.yml',
+    'config/sidekiq_config2.yml'
+]
 :sidekiq_concurrency => 25
 :sidekiq_queues => %w(default high low)
 :sidekiq_processes => 1 # number of systemd processes you want to start

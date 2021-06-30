@@ -24,19 +24,22 @@ namespace :sidekiq do
       git_plugin.switch_user(role) do
         git_plugin.quiet_sidekiq
         git_plugin.process_block do |process|
-          start_time = Time.now
+          start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           running = nil
 
           # get running workers
-          while (running.nil? || running > 0) && start_time > 30.seconds.ago do
+          while (running.nil? || running > 0) && git_plugin.duration(start_time) < 30 do
             command_args =
-              if fetch(:sidekiq_service_unit_user) == :system
-                [:sudo, :systemctl]
-              else
-                [:systemctl, "--user"]
-              end
+            if fetch(:sidekiq_service_unit_user) == :system
+              [:sudo, 'systemd-cgls']
+            else
+              ['systemd-clgs', '--user']
+            end
+            # need to pipe through tr -cd... to strip out systemd colors or you
+            # get log error messages for non UTF-8 characters.
             command_args.push(
-              :status, git_plugin.sidekiq_service_unit_name(process: process)
+              '-u', "#{git_plugin.sidekiq_service_unit_name(process: process)}.service",
+              '|', 'tr -cd \'\11\12\15\40-\176\''
             )
             status = capture(*command_args, raise_on_non_zero_exit: false)
             status_match = status.match(/\[(?<running>\d+) of (?<total>\d+) busy\]/)
@@ -46,9 +49,9 @@ namespace :sidekiq do
 
             colors = SSHKit::Color.new($stdout)
             if running.zero?
-              puts colors.colorize('    ✔ No running workers. Shutting down for restart!', :green)
+              info colors.colorize("✔ Process ##{process}: No running workers. Shutting down for restart!", :green)
             else
-              puts colors.colorize("    ⧗ Waiting for #{running} workers.", :yellow)
+              info colors.colorize("⧗ Process ##{process}: Waiting for #{running} workers.", :yellow)
               sleep(1)
             end
           end
@@ -73,8 +76,11 @@ namespace :sidekiq do
   task :install do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.process_block do |process|
-          git_plugin.create_systemd_template(process: process)
+        git_plugin.create_systemd_template
+        if git_plugin.config_per_process?
+          git_plugin.process_block do |process|
+            git_plugin.create_systemd_config_symlink(process)
+          end
         end
         git_plugin.systemctl_command(:enable)
 
@@ -91,12 +97,15 @@ namespace :sidekiq do
       git_plugin.switch_user(role) do
         git_plugin.systemctl_command(:stop)
         git_plugin.systemctl_command(:disable)
-        git_plugin.process_block do |process|
-          execute :sudo, :rm, '-f', File.join(
-            fetch(:service_unit_path, git_plugin.fetch_systemd_unit_path),
-            git_plugin.sidekiq_service_file_name(process: process)
-          )
+        if git_plugin.config_per_process?
+          git_plugin.process_block do |process|
+            git_plugin.delete_systemd_config_symlink(process)
+          end
         end
+        execute :sudo, :rm, '-f', File.join(
+          fetch(:service_unit_path, git_plugin.fetch_systemd_unit_path),
+          git_plugin.sidekiq_service_file_name
+        )
       end
     end
   end
@@ -104,10 +113,7 @@ namespace :sidekiq do
   desc 'Generate service_locally'
   task :generate_service_locally do
     run_locally do
-      git_plugin.process_block do |process|
-        file_name = process.present? ? "sidekiq-#{process}" : 'sidekiq'
-        File.write(file_name, git_plugin.compiled_template(process: process))
-      end
+      File.write('sidekiq', git_plugin.compiled_template)
     end
   end
 
@@ -121,7 +127,7 @@ namespace :sidekiq do
     end
   end
 
-  def compiled_template(process: nil)
+  def compiled_template
     local_template_directory = fetch(:sidekiq_service_templates_path)
     search_paths = [
       File.join(local_template_directory, "#{fetch(:sidekiq_service_unit_name)}.service.capistrano.erb"),
@@ -133,21 +139,19 @@ namespace :sidekiq do
     ]
     template_path = search_paths.detect { |path| File.file?(path) }
     template = File.read(template_path)
-    @process = process
     ERB.new(template).result(binding)
   end
 
-  def create_systemd_template(process: nil)
-    ctemplate = compiled_template(process: process)
+  def create_systemd_template
+    ctemplate = compiled_template
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
-    sidekiq_process_file_name = sidekiq_service_file_name(process: process)
-    systemd_file_name = File.join(systemd_path, sidekiq_process_file_name)
+    systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
 
     if fetch(:sidekiq_service_unit_user) == :user
       backend.execute :mkdir, "-p", systemd_path
     end
 
-    temp_file_name = File.join('/tmp', sidekiq_process_file_name)
+    temp_file_name = File.join('/tmp', sidekiq_service_file_name)
     backend.upload!(StringIO.new(ctemplate), temp_file_name)
     if fetch(:sidekiq_service_unit_user) == :system
       backend.execute :sudo, :mv, temp_file_name, systemd_file_name
@@ -158,8 +162,40 @@ namespace :sidekiq do
     end
   end
 
+  def create_systemd_config_symlink(process)
+    config = fetch(:sidekiq_config)
+    return unless config
+
+    process_config = config[process - 1]
+    unless process_config.present?
+      backend.error(
+        "No configuration for Process ##{process} found. "\
+        'Please make sure you have 1 item in :sidekiq_config for each process.'
+      )
+      exit 1
+    end
+
+    base_path = fetch(:deploy_to)
+    config_link_base_path = File.join(base_path, 'shared', 'sidekiq_systemd')
+    config_link_path = File.join(
+      config_link_base_path, sidekiq_systemd_config_name(process)
+    )
+    process_config_path = File.join(base_path, 'current', process_config)
+
+    backend.execute :mkdir, '-p', config_link_base_path
+    backend.execute :ln, '-sf', process_config_path, config_link_path
+  end
+
+  def delete_systemd_config_symlink(process)
+    config_link_path = File.join(
+      fetch(:deploy_to),  'shared', 'sidekiq_systemd',
+      sidekiq_systemd_config_name(process)
+    )
+    backend.execute :rm, config_link_path, raise_on_non_zero_exit: false
+  end
+
   def systemctl_command(*args, process: nil)
-    base_array =
+    execute_array =
       if fetch(:sidekiq_service_unit_user) == :system
         [:sudo, :systemctl]
       else
@@ -167,18 +203,13 @@ namespace :sidekiq do
       end
 
     if process.present?
-      base_array.push(
+      execute_array.push(
         *args, sidekiq_service_unit_name(process: process)
         ).flatten
-      backend.execute(*base_array, raise_on_non_zero_exit: false)
+      backend.execute(*execute_array, raise_on_non_zero_exit: false)
     else
-      process_block do |process|
-        execute_array = base_array.dup
-        execute_array.push(
-          *args, sidekiq_service_unit_name(process: process)
-        ).flatten
-        backend.execute(*execute_array, raise_on_non_zero_exit: false)
-      end
+      execute_array.push(*args, sidekiq_service_unit_name).flatten
+      backend.execute(*execute_array, raise_on_non_zero_exit: false)
     end
   end
 
@@ -201,17 +232,19 @@ namespace :sidekiq do
     fetch(:sidekiq_user, fetch(:run_as))
   end
 
-  def sidekiq_config(process: nil)
+  def sidekiq_config
     config = fetch(:sidekiq_config)
     return unless config
 
-    if process.present? && config_per_process?
-      config = config[process-1]
-      # if configs array is smaller than process count then sample
-      config ||= fetch(:sidekiq_config).sample
+    if config_per_process?
+      config = File.join(
+        fetch(:deploy_to), 'shared', 'sidekiq_systemd',
+        sidekiq_systemd_config_name
+      )
+      "--config #{config}"
+    else
+      "--config #{config}"
     end
-
-    "--config #{config}"
   end
 
   def sidekiq_concurrency
@@ -230,20 +263,24 @@ namespace :sidekiq do
     end.join(' ')
   end
 
-  def sidekiq_service_file_name(process: nil)
-    if process.present?
-      "#{fetch(:sidekiq_service_unit_name)}-#{process}.service"
-    else
-      "#{fetch(:sidekiq_service_unit_name)}@.service"
-    end
+  def sidekiq_service_file_name
+    "#{fetch(:sidekiq_service_unit_name)}@.service"
   end
 
   def sidekiq_service_unit_name(process: nil)
     if process.present?
-      "#{fetch(:sidekiq_service_unit_name)}-#{process}"
+      "#{fetch(:sidekiq_service_unit_name)}@#{process}"
     else
       "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
     end
+  end
+
+  # process = 1 | sidekiq_systemd_1.yaml
+  # process = nil | sidekiq_systemd_%i.yaml
+  def sidekiq_systemd_config_name(process = nil)
+    file_name = 'sidekiq_systemd_'
+    file_name << (process.present? ? process.to_s : '%i')
+    "#{file_name}.yaml"
   end
 
   def config_per_process?
@@ -251,12 +288,13 @@ namespace :sidekiq do
   end
 
   def process_block
-    if config_per_process?
-      (1..sidekiq_processes).each do |process|
-        yield(process)
-      end
-    else
-      yield(nil)
+    (1..sidekiq_processes).each do |process|
+      yield(process)
     end
   end
+
+  def duration(start_time)
+    Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+  end
+
 end

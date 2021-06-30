@@ -42,7 +42,7 @@ Type=notify
 WatchdogSec=10
 
 WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
-ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config(process: @process) %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
+ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
 
 # Use `systemctl kill -s TSTP sidekiq` to quiet the Sidekiq process
 
