@@ -42,6 +42,7 @@ Configurable options, shown here with defaults:
 :sidekiq_service_unit_user => :user # :system
 :sidekiq_enable_lingering => true
 :sidekiq_lingering_user => nil
+:sidekiq_systemd_template => nil # to supply your own
 
 # sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
