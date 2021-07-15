@@ -20,7 +20,7 @@ And then execute:
     require 'capistrano/sidekiq'
     install_plugin Capistrano::Sidekiq  # Default sidekiq tasks
     # Then select your service manager
-    install_plugin Capistrano::Sidekiq::Systemd 
+    install_plugin Capistrano::Sidekiq::Systemd
     # or  
     install_plugin Capistrano::Sidekiq::Upstart  # tests needed
     # or  
@@ -42,7 +42,7 @@ Configurable options, shown here with defaults:
 :sidekiq_service_unit_user => :user # :system
 :sidekiq_enable_lingering => true
 :sidekiq_lingering_user => nil
-:sidekiq_systemd_template => nil # to supply your own
+:sidekiq_systemd_template => '' # to supply your own
 
 # sidekiq monit
 :sidekiq_monit_templates_path => 'config/deploy/templates'
@@ -51,7 +51,7 @@ Configurable options, shown here with defaults:
 :monit_bin => '/usr/bin/monit'
 :sidekiq_monit_default_hooks => true
 :sidekiq_monit_group => nil
-:sidekiq_service_name => "sidekiq_#{fetch(:application)}" 
+:sidekiq_service_name => "sidekiq_#{fetch(:application)}"
 
 :sidekiq_user => nil #user to run sidekiq as
 ```

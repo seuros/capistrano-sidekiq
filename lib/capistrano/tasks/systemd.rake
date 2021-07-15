@@ -88,7 +88,7 @@ namespace :sidekiq do
 
   def compiled_template
     search_paths = [
-      (fetch(:sidekiq_systemd_template) || ''),
+      fetch(:sidekiq_systemd_template),
       File.expand_path(
           File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
           __FILE__
