@@ -1,26 +1,70 @@
+# Source: https://github.com/mperham/sidekiq/blob/master/examples/systemd/sidekiq.service
+#
+# This file tells systemd how to run Sidekiq as a 24/7 long-running daemon.
+#
+# Customize this file based on your bundler location, app directory, etc.
+# Customize and copy this into /usr/lib/systemd/system (CentOS) or /lib/systemd/system (Ubuntu).
+# Then run:
+#   - systemctl enable sidekiq
+#   - systemctl {start,stop,restart} sidekiq
+#
+# This file corresponds to a single Sidekiq process.  Add multiple copies
+# to run multiple processes (sidekiq-1, sidekiq-2, etc).
+#
+# Use `journalctl -u sidekiq -rn 100` to view the last 100 lines of log output.
+#
 [Unit]
 Description=sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
+# start us only once the network and logging subsystems are available,
+# consider adding redis-server.service if Redis is local and systemd-managed.
 After=syslog.target network.target
 
+# See these pages for lots of options:
+#
+#   https://www.freedesktop.org/software/systemd/man/systemd.service.html
+#   https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+#
+# THOSE PAGES ARE CRITICAL FOR ANY LINUX DEVOPS WORK; read them multiple
+# times! systemd is a critical tool for all developers to know and understand.
+#
 [Service]
-Type=simple
+#
+#      !!!!  !!!!  !!!!
+#
+# As of v6.0.6, Sidekiq automatically supports systemd's `Type=notify` and watchdog service
+# monitoring. If you are using an earlier version of Sidekiq, change this to `Type=simple`
+# and remove the `WatchdogSec` line.
+#
+#      !!!!  !!!!  !!!!
+#
+Type=notify
+# If your Sidekiq process locks up, systemd's watchdog will restart it within seconds.
+WatchdogSec=10
+
 WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
-ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
-ExecReload=/bin/kill -TSTP $MAINPID
-ExecStop=/bin/kill -TERM $MAINPID
-<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
-<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
+ExecStart=<%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
+
+# Use `systemctl kill -s TSTP sidekiq` to quiet the Sidekiq process
+
 <%="User=#{sidekiq_user}" if sidekiq_user %>
-<%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
+UMask=0002
 
-<% fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
-  <%="Environment=#{environment_variable}" %>
-<% end %>
+<%="EnvironmentFile=#{File.join(fetch(:deploy_to), 'current')}/#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
 
+# Greatly reduce Ruby memory fragmentation and heap usage
+# https://www.mikeperham.com/2018/04/25/taming-rails-memory-bloat/
+Environment=MALLOC_ARENA_MAX=2
+
+# if we crash, restart
 RestartSec=1
 Restart=on-failure
 
+# output goes to /var/log/syslog (Ubuntu) or /var/log/messages (CentOS)
+<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
+<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
+
+# This will default to "bundler" if we don't specify it
 SyslogIdentifier=sidekiq
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
