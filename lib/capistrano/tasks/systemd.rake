@@ -167,7 +167,7 @@ namespace :sidekiq do
     return unless config
 
     process_config = config[process - 1]
-    unless process_config.present?
+    if process_config.nil?
       backend.error(
         "No configuration for Process ##{process} found. "\
         'Please make sure you have 1 item in :sidekiq_config for each process.'
@@ -202,7 +202,7 @@ namespace :sidekiq do
         [:systemctl, '--user']
       end
 
-    if process.present?
+    if process
       execute_array.push(
         *args, sidekiq_service_unit_name(process: process)
         ).flatten
@@ -268,7 +268,7 @@ namespace :sidekiq do
   end
 
   def sidekiq_service_unit_name(process: nil)
-    if process.present?
+    if process
       "#{fetch(:sidekiq_service_unit_name)}@#{process}"
     else
       "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
@@ -279,7 +279,7 @@ namespace :sidekiq do
   # process = nil | sidekiq_systemd_%i.yaml
   def sidekiq_systemd_config_name(process = nil)
     file_name = 'sidekiq_systemd_'
-    file_name << (process.present? ? process.to_s : '%i')
+    file_name << (process&.to_s || '%i')
     "#{file_name}.yaml"
   end
 
