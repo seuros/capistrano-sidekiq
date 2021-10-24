@@ -52,5 +52,9 @@ module Capistrano
       end
     end
 
+    def expanded_bundle_path
+      backend.capture(:echo, SSHKit.config.command_map[:bundle]).strip
+    end
+
   end
 end
