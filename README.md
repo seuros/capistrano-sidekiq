@@ -28,7 +28,7 @@ And then execute:
 ```
 
 
-Configurable options, shown here with defaults:
+Configurable options - Please ensure you check your version's branch for the available settings - shown here with defaults:
 
 ```ruby
 :sidekiq_roles => :app
@@ -44,7 +44,7 @@ Configurable options, shown here with defaults:
     'config/sidekiq_config2.yml'
 ]
 :sidekiq_concurrency => 25
-:sidekiq_queues => %w(default high low)
+:sidekiq_queue => %w(default high low)
 :sidekiq_processes => 1 # number of systemd processes you want to start
 
 # sidekiq systemd options
