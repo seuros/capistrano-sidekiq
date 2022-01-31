@@ -51,9 +51,9 @@ UMask=0002
 
 <%="EnvironmentFile=#{File.join(fetch(:deploy_to), 'current')}/#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
 
-# Greatly reduce Ruby memory fragmentation and heap usage
-# https://www.mikeperham.com/2018/04/25/taming-rails-memory-bloat/
-Environment=MALLOC_ARENA_MAX=2
+<% fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
+  <%="Environment=#{environment_variable}" %>
+<% end %>
 
 # if we crash, restart
 RestartSec=1
