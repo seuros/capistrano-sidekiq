@@ -33,7 +33,7 @@ namespace :sidekiq do
             if fetch(:sidekiq_service_unit_user) == :system
               [:sudo, 'systemd-cgls']
             else
-              ['systemd-clgs', '--user']
+              ['systemd-cgls', '--user']
             end
             # need to pipe through tr -cd... to strip out systemd colors or you
             # get log error messages for non UTF-8 characters.
