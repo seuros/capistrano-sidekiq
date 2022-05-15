@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 git_plugin = self
 
 namespace :sidekiq do
-
   standard_actions = {
     start: 'Start Sidekiq',
     stop: 'Stop Sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)',
@@ -30,11 +31,11 @@ namespace :sidekiq do
           # get running workers
           while (running.nil? || running > 0) && git_plugin.duration(start_time) < 30 do
             command_args =
-            if fetch(:sidekiq_service_unit_user) == :system
-              [:sudo, 'systemd-cgls']
-            else
-              ['systemd-cgls', '--user']
-            end
+              if fetch(:sidekiq_service_unit_user) == :system
+                [:sudo, 'systemd-cgls']
+              else
+                ['systemd-cgls', '--user']
+              end
             # need to pipe through tr -cd... to strip out systemd colors or you
             # get log error messages for non UTF-8 characters.
             command_args.push(
@@ -85,7 +86,7 @@ namespace :sidekiq do
         git_plugin.systemctl_command(:enable)
 
         if fetch(:sidekiq_service_unit_user) != :system && fetch(:sidekiq_enable_lingering)
-          execute :loginctl, "enable-linger", fetch(:sidekiq_lingering_user)
+          execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
         end
       end
     end
@@ -120,10 +121,10 @@ namespace :sidekiq do
   def fetch_systemd_unit_path
     if fetch(:sidekiq_service_unit_user) == :system
       # if the path is not standard `set :service_unit_path`
-      "/etc/systemd/system/"
+      '/etc/systemd/system/'
     else
       home_dir = backend.capture :pwd
-      File.join(home_dir, ".config", "systemd", "user")
+      File.join(home_dir, '.config', 'systemd', 'user')
     end
   end
 
@@ -133,9 +134,9 @@ namespace :sidekiq do
       File.join(local_template_directory, "#{fetch(:sidekiq_service_unit_name)}.service.capistrano.erb"),
       File.join(local_template_directory, 'sidekiq.service.capistrano.erb'),
       File.expand_path(
-          File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
-          __FILE__
-      ),
+        File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
+        __FILE__
+      )
     ]
     template_path = search_paths.detect { |path| File.file?(path) }
     template = File.read(template_path)
@@ -147,18 +148,16 @@ namespace :sidekiq do
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
     systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
 
-    if fetch(:sidekiq_service_unit_user) == :user
-      backend.execute :mkdir, "-p", systemd_path
-    end
+    backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_service_unit_user) == :user
 
     temp_file_name = File.join('/tmp', sidekiq_service_file_name)
     backend.upload!(StringIO.new(ctemplate), temp_file_name)
     if fetch(:sidekiq_service_unit_user) == :system
       backend.execute :sudo, :mv, temp_file_name, systemd_file_name
-      backend.execute :sudo, :systemctl, "daemon-reload"
+      backend.execute :sudo, :systemctl, 'daemon-reload'
     else
       backend.execute :mv, temp_file_name, systemd_file_name
-      backend.execute :systemctl, "--user", "daemon-reload"
+      backend.execute :systemctl, '--user', 'daemon-reload'
     end
   end
 
@@ -188,7 +187,7 @@ namespace :sidekiq do
 
   def delete_systemd_config_symlink(process)
     config_link_path = File.join(
-      fetch(:deploy_to),  'shared', 'sidekiq_systemd',
+      fetch(:deploy_to), 'shared', 'sidekiq_systemd',
       sidekiq_systemd_config_name(process)
     )
     backend.execute :rm, config_link_path, raise_on_non_zero_exit: false
@@ -197,7 +196,7 @@ namespace :sidekiq do
   def systemctl_command(*args, process: nil)
     execute_array =
       if fetch(:sidekiq_service_unit_user) == :system
-        [:sudo, :systemctl]
+        %i[sudo systemctl]
       else
         [:systemctl, '--user']
       end
@@ -206,25 +205,22 @@ namespace :sidekiq do
       execute_array.push(
         *args, sidekiq_service_unit_name(process: process)
         ).flatten
-      backend.execute(*execute_array, raise_on_non_zero_exit: false)
     else
       execute_array.push(*args, sidekiq_service_unit_name).flatten
-      backend.execute(*execute_array, raise_on_non_zero_exit: false)
     end
+    backend.execute(*execute_array, raise_on_non_zero_exit: false)
   end
 
   def quiet_sidekiq
     systemctl_command(:kill, '-s', :TSTP)
   end
 
-  def switch_user(role)
+  def switch_user(role, &block)
     su_user = sidekiq_user
     if su_user != role.user
       yield
     else
-      backend.as su_user do
-        yield
-      end
+      backend.as su_user, &block
     end
   end
 
@@ -241,16 +237,12 @@ namespace :sidekiq do
         fetch(:deploy_to), 'shared', 'sidekiq_systemd',
         sidekiq_systemd_config_name
       )
-      "--config #{config}"
-    else
-      "--config #{config}"
     end
+    "--config #{config}"
   end
 
   def sidekiq_concurrency
-    if fetch(:sidekiq_concurrency)
-      "--concurrency #{fetch(:sidekiq_concurrency)}"
-    end
+    "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
   end
 
   def sidekiq_processes
@@ -264,14 +256,16 @@ namespace :sidekiq do
   end
 
   def sidekiq_service_file_name
-    "#{fetch(:sidekiq_service_unit_name)}@.service"
+    "#{fetch(:sidekiq_service_unit_name)}.service"
   end
 
   def sidekiq_service_unit_name(process: nil)
     if process
       "#{fetch(:sidekiq_service_unit_name)}@#{process}"
-    else
+    elsif sidekiq_processes > 1
       "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
+    else
+      fetch(:sidekiq_service_unit_name)
     end
   end
 
@@ -296,5 +290,4 @@ namespace :sidekiq do
   def duration(start_time)
     Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
   end
-
 end
