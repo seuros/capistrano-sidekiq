@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'capistrano/bundler'
-require "capistrano/plugin"
+require 'capistrano/plugin'
 
 module Capistrano
   class Sidekiq < Capistrano::Plugin
     def define_tasks
-      eval_rakefile File.expand_path('../tasks/sidekiq.rake', __FILE__)
+      eval_rakefile File.expand_path('tasks/sidekiq.rake', __dir__)
     end
 
     def set_defaults

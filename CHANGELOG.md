@@ -1,8 +1,17 @@
 # Changelog
 
-## [2.2.0](https://github.com/seuros/capistrano-sidekiq/tree/2.2.0) (2022-05-16)
+## [2.3.0](https://github.com/seuros/capistrano-sidekiq/tree/2.3.0) (2022-05-16)
 
-[Full Changelog](https://github.com/seuros/capistrano-sidekiq/compare/v2.1.0...2.2.0)
+[Full Changelog](https://github.com/seuros/capistrano-sidekiq/compare/v2.2.0...2.3.0)
+
+**Merged pull requests:**
+
+- fix sidekiq processes naming when count is 1 [\#300](https://github.com/seuros/capistrano-sidekiq/pull/300) ([seuros](https://github.com/seuros))
+- Support multiple processes in `sidekiq:install` [\#299](https://github.com/seuros/capistrano-sidekiq/pull/299) ([lloydwatkin](https://github.com/lloydwatkin))
+
+## [v2.2.0](https://github.com/seuros/capistrano-sidekiq/tree/v2.2.0) (2022-05-16)
+
+[Full Changelog](https://github.com/seuros/capistrano-sidekiq/compare/v2.1.0...v2.2.0)
 
 **Merged pull requests:**
 

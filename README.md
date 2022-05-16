@@ -65,13 +65,6 @@ Configurable options - Please ensure you check your version's branch for the ava
 ```
 See `capistrano/sidekiq/helpers.rb` for other undocumented configuration settings.
 
-## Known issues with Capistrano 3
-
-There is a known bug that prevents sidekiq from starting when pty is true on Capistrano 3.
-```ruby
-set :pty,  false
-```
-
 ## Bundler
 
 If you'd like to prepend `bundle exec` to your sidekiq and sidekiqctl calls, modify the SSHKit command maps
