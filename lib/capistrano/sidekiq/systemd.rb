@@ -3,7 +3,7 @@ module Capistrano
     include Sidekiq::Helpers
 
     def set_defaults
-      set_if_empty :sidekiq_service_unit_name, 'sidekiq'
+      set_if_empty :sidekiq_service_unit_name, 'sidekiq' # This will change in version 3.0.0 to {application}-sidekiq
       set_if_empty :sidekiq_service_unit_user, :user # :system
       set_if_empty :sidekiq_enable_lingering, true
       set_if_empty :sidekiq_lingering_user, nil
