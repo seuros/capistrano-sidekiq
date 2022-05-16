@@ -146,18 +146,25 @@ namespace :sidekiq do
   def create_systemd_template
     ctemplate = compiled_template
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
-    systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
-
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_service_unit_user) == :user
 
-    temp_file_name = File.join('/tmp', sidekiq_service_file_name)
-    backend.upload!(StringIO.new(ctemplate), temp_file_name)
-    if fetch(:sidekiq_service_unit_user) == :system
-      backend.execute :sudo, :mv, temp_file_name, systemd_file_name
-      backend.execute :sudo, :systemctl, 'daemon-reload'
+    if sidekiq_processes > 1
+      range = 1..sidekiq_processes
     else
-      backend.execute :mv, temp_file_name, systemd_file_name
-      backend.execute :systemctl, '--user', 'daemon-reload'
+      range = 0..0
+    end
+    range.each do |index|
+      temp_file_name = File.join('/tmp', sidekiq_service_file_name(index))
+      systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(index))
+      backend.upload!(StringIO.new(ctemplate), temp_file_name)
+
+      if fetch(:sidekiq_service_unit_user) == :system
+        backend.execute :sudo, :mv, temp_file_name, systemd_file_name
+        backend.execute :sudo, :systemctl, 'daemon-reload'
+      else
+        backend.execute :mv, temp_file_name, systemd_file_name
+        backend.execute :systemctl, '--user', 'daemon-reload'
+      end
     end
   end
 
@@ -254,8 +261,9 @@ namespace :sidekiq do
     end.join(' ')
   end
 
-  def sidekiq_service_file_name
-    "#{fetch(:sidekiq_service_unit_name)}.service"
+  def sidekiq_service_file_name(index = nil)
+    return "#{fetch(:sidekiq_service_unit_name)}.service" unless index
+    "#{fetch(:sidekiq_service_unit_name)}@#{index}.service"
   end
 
   def sidekiq_service_unit_name(process: nil)
