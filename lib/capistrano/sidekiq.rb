@@ -21,7 +21,6 @@ module Capistrano
       # Bundler integration
       append :bundle_bins, 'sidekiq', 'sidekiqctl'
     end
-
   end
 end
 
