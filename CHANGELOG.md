@@ -1,11 +1,12 @@
 # Changelog
 
-## [2.2.0](https://github.com/seuros/capistrano-sidekiq/tree/2.2.0) (UNRELEASED)
+## [2.2.0](https://github.com/seuros/capistrano-sidekiq/tree/2.2.0) (2022-05-16)
 
 [Full Changelog](https://github.com/seuros/capistrano-sidekiq/compare/v2.1.0...2.2.0)
 
 **Merged pull requests:**
 
+- Allow the definition of  service\_unit\_name [\#297](https://github.com/seuros/capistrano-sidekiq/pull/297) ([seuros](https://github.com/seuros))
 - restore sidekiq unit env vars [\#295](https://github.com/seuros/capistrano-sidekiq/pull/295) ([tayagi-aim](https://github.com/tayagi-aim))
 - Fix a typo in sidekiq:restart [\#294](https://github.com/seuros/capistrano-sidekiq/pull/294) ([hoppergee](https://github.com/hoppergee))
 
