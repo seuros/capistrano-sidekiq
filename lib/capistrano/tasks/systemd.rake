@@ -200,8 +200,7 @@ namespace :sidekiq do
       else
         [:systemctl, '--user']
       end
-
-    if process
+    if process && sidekiq_processes > 1
       execute_array.push(
         *args, sidekiq_service_unit_name(process: process)
         ).flatten
@@ -260,10 +259,8 @@ namespace :sidekiq do
   end
 
   def sidekiq_service_unit_name(process: nil)
-    if process
+    if process && sidekiq_processes > 1
       "#{fetch(:sidekiq_service_unit_name)}@#{process}"
-    elsif sidekiq_processes > 1
-      "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
     else
       fetch(:sidekiq_service_unit_name)
     end
@@ -272,9 +269,7 @@ namespace :sidekiq do
   # process = 1 | sidekiq_systemd_1.yaml
   # process = nil | sidekiq_systemd_%i.yaml
   def sidekiq_systemd_config_name(process = nil)
-    file_name = 'sidekiq_systemd_'
-    file_name << (process&.to_s || '%i')
-    "#{file_name}.yaml"
+   "sidekiq_systemd_#{(process&.to_s || '%i')}.yaml"
   end
 
   def config_per_process?

@@ -1,22 +1,18 @@
+# frozen_string_literal: true
+
 module Capistrano
   module Sidekiq::Helpers
 
     def sidekiq_require
-      if fetch(:sidekiq_require)
-        "--require #{fetch(:sidekiq_require)}"
-      end
+      "--require #{fetch(:sidekiq_require)}" if fetch(:sidekiq_require)
     end
 
     def sidekiq_config
-      if fetch(:sidekiq_config)
-        "--config #{fetch(:sidekiq_config)}"
-      end
+      "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     end
 
     def sidekiq_concurrency
-      if fetch(:sidekiq_concurrency)
-        "--concurrency #{fetch(:sidekiq_concurrency)}"
-      end
+      "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
     end
 
     def sidekiq_queues
@@ -29,14 +25,12 @@ module Capistrano
       fetch(:sidekiq_log)
     end
 
-    def switch_user(role)
+    def switch_user(role, &block)
       su_user = sidekiq_user(role)
       if su_user == role.user
         yield
       else
-        as su_user do
-          yield
-        end
+        as su_user, &block
       end
     end
 
@@ -55,6 +49,5 @@ module Capistrano
     def expanded_bundle_path
       backend.capture(:echo, SSHKit.config.command_map[:bundle]).strip
     end
-
   end
 end

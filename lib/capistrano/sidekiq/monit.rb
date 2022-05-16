@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Capistrano
   class Sidekiq::Monit < Capistrano::Plugin
     include Sidekiq::Helpers
@@ -13,7 +15,7 @@ module Capistrano
     end
 
     def define_tasks
-      eval_rakefile File.expand_path('../../tasks/monit.rake', __FILE__)
+      eval_rakefile File.expand_path('../tasks/monit.rake', __dir__)
     end
   end
 end
