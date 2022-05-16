@@ -146,18 +146,16 @@ namespace :sidekiq do
   def create_systemd_template
     ctemplate = compiled_template
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
-    systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
-
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_service_unit_user) == :user
-
 
     if sidekiq_processes > 1
       range = 1..sidekiq_processes
     else
       range = 0..0
     end
-    for range do |index|
+    range.each do |index|
       temp_file_name = File.join('/tmp', sidekiq_service_file_name(index))
+      systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(index))
       backend.upload!(StringIO.new(ctemplate), temp_file_name)
 
       if fetch(:sidekiq_service_unit_user) == :system
