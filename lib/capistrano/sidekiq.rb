@@ -27,5 +27,4 @@ end
 
 require_relative 'sidekiq/helpers'
 require_relative 'sidekiq/systemd'
-require_relative 'sidekiq/upstart'
 require_relative 'sidekiq/monit'
