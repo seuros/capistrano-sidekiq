@@ -262,7 +262,7 @@ namespace :sidekiq do
   end
 
   def sidekiq_service_file_name(index = nil)
-    return "#{fetch(:sidekiq_service_unit_name)}.service" unless index
+    return "#{fetch(:sidekiq_service_unit_name)}.service" if index.to_i.zero?
     "#{fetch(:sidekiq_service_unit_name)}@#{index}.service"
   end
 
