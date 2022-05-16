@@ -150,22 +150,23 @@ namespace :sidekiq do
 
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_service_unit_user) == :user
 
-    temp_file_name = File.join('/tmp', sidekiq_service_file_name)
-    if sidekiq_processes > 1
-      for 1..sidekiq_processes do |index|
-        temp_file_name = File.join('/tmp', sidekiq_service_file_name(index))
-        backend.upload!(StringIO.new(ctemplate), temp_file_name)
-      end
 
+    if sidekiq_processes > 1
+      range = 1..sidekiq_processes
     else
-      backend.upload!(StringIO.new(ctemplate), temp_file_name)
+      range = 0..0
     end
-    if fetch(:sidekiq_service_unit_user) == :system
-      backend.execute :sudo, :mv, temp_file_name, systemd_file_name
-      backend.execute :sudo, :systemctl, 'daemon-reload'
-    else
-      backend.execute :mv, temp_file_name, systemd_file_name
-      backend.execute :systemctl, '--user', 'daemon-reload'
+    for range do |index|
+      temp_file_name = File.join('/tmp', sidekiq_service_file_name(index))
+      backend.upload!(StringIO.new(ctemplate), temp_file_name)
+
+      if fetch(:sidekiq_service_unit_user) == :system
+        backend.execute :sudo, :mv, temp_file_name, systemd_file_name
+        backend.execute :sudo, :systemctl, 'daemon-reload'
+      else
+        backend.execute :mv, temp_file_name, systemd_file_name
+        backend.execute :systemctl, '--user', 'daemon-reload'
+      end
     end
   end
 
