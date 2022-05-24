@@ -13,7 +13,9 @@ namespace :sidekiq do
     task command do
       on roles fetch(:sidekiq_roles) do |role|
         git_plugin.switch_user(role) do
-          git_plugin.systemctl_command(command)
+          git_plugin.process_block do |process|
+            git_plugin.systemctl_command(command, process: process)
+          end
         end
       end
     end
@@ -23,8 +25,8 @@ namespace :sidekiq do
   task :restart do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.quiet_sidekiq
         git_plugin.process_block do |process|
+          git_plugin.quiet_sidekiq(process: process)
           start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           running = nil
 
@@ -68,7 +70,9 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.quiet_sidekiq
+        git_plugin.process_block do |process|
+          git_plugin.quiet_sidekiq(process: process)
+        end
       end
     end
   end
@@ -83,7 +87,10 @@ namespace :sidekiq do
             git_plugin.create_systemd_config_symlink(process)
           end
         end
-        git_plugin.systemctl_command(:enable)
+
+        git_plugin.process_block do |process|
+          git_plugin.systemctl_command(:enable, process: process)
+        end
 
         if fetch(:sidekiq_service_unit_user) != :system && fetch(:sidekiq_enable_lingering)
           execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
@@ -96,8 +103,11 @@ namespace :sidekiq do
   task :uninstall do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.systemctl_command(:stop)
-        git_plugin.systemctl_command(:disable)
+        git_plugin.process_block do |process|
+          git_plugin.systemctl_command(:stop, process: process)
+          git_plugin.systemctl_command(:disable, process: process)
+        end
+
         if git_plugin.config_per_process?
           git_plugin.process_block do |process|
             git_plugin.delete_systemd_config_symlink(process)
@@ -217,8 +227,8 @@ namespace :sidekiq do
     backend.execute(*execute_array, raise_on_non_zero_exit: false)
   end
 
-  def quiet_sidekiq
-    systemctl_command(:kill, '-s', :TSTP)
+  def quiet_sidekiq(process: nil)
+    systemctl_command(:kill, '-s', :TSTP, process: process)
   end
 
   def switch_user(role, &block)
