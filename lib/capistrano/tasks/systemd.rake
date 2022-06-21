@@ -85,8 +85,9 @@ namespace :sidekiq do
             git_plugin.create_systemd_config_symlink(process)
           end
         end
-        git_plugin.systemctl_command(:enable)
-
+        git_plugin.process_block do |process|
+          git_plugin.systemctl_command(:enable, process: process)
+        end
         if fetch(:sidekiq_service_unit_user) != :system && fetch(:sidekiq_enable_lingering)
           execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
         end
@@ -98,8 +99,10 @@ namespace :sidekiq do
   task :uninstall do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.systemctl_command(:stop)
-        git_plugin.systemctl_command(:disable)
+        git_plugin.process_block do |process|
+          git_plugin.systemctl_command(:stop, process: process)
+          git_plugin.systemctl_command(:disable, process: process)
+        end
         if git_plugin.config_per_process?
           git_plugin.process_block do |process|
             git_plugin.delete_systemd_config_symlink(process)
