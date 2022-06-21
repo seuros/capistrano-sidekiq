@@ -13,7 +13,9 @@ namespace :sidekiq do
     task command do
       on roles fetch(:sidekiq_roles) do |role|
         git_plugin.switch_user(role) do
-          git_plugin.systemctl_command(command)
+          git_plugin.process_block do |process|
+            git_plugin.systemctl_command(command, process: process)
+          end
         end
       end
     end
@@ -287,7 +289,6 @@ namespace :sidekiq do
   end
 
   def process_block
-    puts "************************ #{sidekiq_processes}"
     (1..sidekiq_processes).each do |process|
       yield(process)
     end
