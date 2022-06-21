@@ -218,7 +218,9 @@ namespace :sidekiq do
   end
 
   def quiet_sidekiq
-    systemctl_command(:kill, '-s', :TSTP)
+    git_plugin.process_block do |process|
+      systemctl_command(:kill, '-s', :TSTP, process: process)
+    end
   end
 
   def switch_user(role, &block)
