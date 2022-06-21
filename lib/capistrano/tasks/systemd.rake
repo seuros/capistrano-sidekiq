@@ -285,6 +285,7 @@ namespace :sidekiq do
   end
 
   def process_block
+    puts "************************ #{sidekiq_processes}"
     (1..sidekiq_processes).each do |process|
       yield(process)
     end
