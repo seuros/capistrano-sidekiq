@@ -70,7 +70,9 @@ namespace :sidekiq do
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
       git_plugin.switch_user(role) do
-        git_plugin.quiet_sidekiq
+        git_plugin.process_block do |process|
+          git_plugin.quiet_sidekiq(process: process)
+        end
       end
     end
   end
@@ -219,8 +221,8 @@ namespace :sidekiq do
     backend.execute(*execute_array, raise_on_non_zero_exit: false)
   end
 
-  def quiet_sidekiq
-    systemctl_command(:kill, '-s', :TSTP)
+  def quiet_sidekiq(process: nil)
+    systemctl_command(:kill, '-s', :TSTP, process: process)
   end
 
   def switch_user(role, &block)
