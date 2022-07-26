@@ -277,7 +277,11 @@ namespace :sidekiq do
   # process = 1 | sidekiq_systemd_1.yaml
   # process = nil | sidekiq_systemd_%i.yaml
   def sidekiq_systemd_config_name(process = nil)
-   "sidekiq_systemd_#{(process&.to_s || '%i')}.yaml"
+    if sidekiq_processes > 1
+      "sidekiq_systemd_#{(process&.to_s || '%i')}.yaml"
+    else
+      'sidekiq_systemd.yaml'
+    end
   end
 
   def config_per_process?
