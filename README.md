@@ -12,7 +12,6 @@ And then execute:
 
     $ bundle
 
-
 ## Usage
 ```ruby
     # Capfile
@@ -24,7 +23,6 @@ And then execute:
     # or
     install_plugin Capistrano::Sidekiq::Monit  # tests needed
 ```
-
 
 Configurable options - Please ensure you check your version's branch for the available settings - shown here with defaults:
 
@@ -73,7 +71,6 @@ in your deploy.rb file:
 SSHKit.config.command_map[:sidekiq] = "bundle exec sidekiq"
 SSHKit.config.command_map[:sidekiqctl] = "bundle exec sidekiqctl"
 ```
-
 
 ## Customizing the monit sidekiq templates
 
