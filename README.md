@@ -63,6 +63,11 @@ Configurable options - Please ensure you check your version's branch for the ava
 ```
 See `capistrano/sidekiq/helpers.rb` for other undocumented configuration settings.
 
+## Upgrading and reconfiguring
+
+When upgrading or reconfiguring the `sidekiq_processes` option you must run
+`sidekiq:uninstall` before and `sidekiq:install` after.
+
 ## Bundler
 
 If you'd like to prepend `bundle exec` to your sidekiq and sidekiqctl calls, modify the SSHKit command maps
