@@ -38,8 +38,9 @@ UMask=0002
 RestartSec=1
 Restart=on-failure
 
-<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
-<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
+<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) -%>
+
+<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) -%>
 
 SyslogIdentifier=<%= sidekiq_service_unit_name %>
 [Install]

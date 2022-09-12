@@ -131,7 +131,7 @@ namespace :sidekiq do
         __FILE__
       )
     ]
-    template_path = search_paths.detect { |path| p path; File.file?(path) }
+    template_path = search_paths.detect { |path| File.file?(path) }
     template = File.read(template_path)
     ERB.new(template, trim_mode: '-').result(binding)
   end
