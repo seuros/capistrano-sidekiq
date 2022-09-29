@@ -111,13 +111,6 @@ namespace :sidekiq do
     end
   end
 
-  desc 'Generate service_locally'
-  task :generate_service_locally do
-    run_locally do
-      File.write('sidekiq', git_plugin.compiled_template)
-    end
-  end
-
   def fetch_systemd_unit_path
     if fetch(:sidekiq_service_unit_user) == :system
       # if the path is not standard `set :service_unit_path`
@@ -134,13 +127,13 @@ namespace :sidekiq do
       File.join(local_template_directory, "#{fetch(:sidekiq_service_unit_name)}.service.capistrano.erb"),
       File.join(local_template_directory, 'sidekiq.service.capistrano.erb'),
       File.expand_path(
-        File.join(*%w[.. .. .. generators capistrano sidekiq systemd templates sidekiq.service.capistrano.erb]),
+        File.join(*%w[.. .. templates sidekiq.service.capistrano.erb]),
         __FILE__
       )
     ]
     template_path = search_paths.detect { |path| File.file?(path) }
     template = File.read(template_path)
-    ERB.new(template).result(binding)
+    ERB.new(template, trim_mode: '-').result(binding)
   end
 
   def create_systemd_template

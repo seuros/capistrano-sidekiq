@@ -14,55 +14,34 @@
 # Use `journalctl -u <%= sidekiq_service_unit_name %> -rn 100` to view the last 100 lines of log output.
 #
 [Unit]
-Description=sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
+Description=Sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
 # start us only once the network and logging subsystems are available,
 # consider adding redis-server.service if Redis is local and systemd-managed.
 After=syslog.target network.target
 
-# See these pages for lots of options:
-#
-#   https://www.freedesktop.org/software/systemd/man/systemd.service.html
-#   https://www.freedesktop.org/software/systemd/man/systemd.exec.html
-#
-# THOSE PAGES ARE CRITICAL FOR ANY LINUX DEVOPS WORK; read them multiple
-# times! systemd is a critical tool for all developers to know and understand.
-#
 [Service]
-#
-#      !!!!  !!!!  !!!!
-#
-# As of v6.0.6, Sidekiq automatically supports systemd's `Type=notify` and watchdog service
-# monitoring. If you are using an earlier version of Sidekiq, change this to `Type=simple`
-# and remove the `WatchdogSec` line.
-#
-#      !!!!  !!!!  !!!!
-#
 Type=notify
 # If your Sidekiq process locks up, systemd's watchdog will restart it within seconds.
 WatchdogSec=10
-
-WorkingDirectory=<%= File.join(fetch(:deploy_to), 'current') %>
+<%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system  -%>
+WorkingDirectory=<%= current_path %>
 ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
 
 # Use `systemctl kill -s TSTP <%= sidekiq_service_unit_name %>` to quiet the Sidekiq process
-<%="User=#{sidekiq_user}" if sidekiq_user %>
 UMask=0002
 
-<%="EnvironmentFile=#{File.join(fetch(:deploy_to), 'current')}/#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
-
-<% fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
+<%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
+<%- fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
   <%="Environment=#{environment_variable}" %>
-<% end %>
-
+<%- end %>
 # if we crash, restart
 RestartSec=1
 Restart=on-failure
 
-# output goes to /var/log/syslog (Ubuntu) or /var/log/messages (CentOS)
-<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) %>
-<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) %>
+<%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) -%>
+
+<%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) -%>
 
 SyslogIdentifier=<%= sidekiq_service_unit_name %>
-
 [Install]
-WantedBy=default.target
+WantedBy=<%=(fetch(:sidekiq_systemctl_user) == :system) ? "multi-user.target" : "default.target"%>
