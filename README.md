@@ -12,7 +12,6 @@ And then execute:
 
     $ bundle
 
-
 ## Usage
 ```ruby
     # Capfile
@@ -24,7 +23,6 @@ And then execute:
     # or
     install_plugin Capistrano::Sidekiq::Monit  # tests needed
 ```
-
 
 Configurable options - Please ensure you check your version's branch for the available settings - shown here with defaults:
 
@@ -65,6 +63,11 @@ Configurable options - Please ensure you check your version's branch for the ava
 ```
 See `capistrano/sidekiq/helpers.rb` for other undocumented configuration settings.
 
+## Upgrading and reconfiguring
+
+When upgrading or reconfiguring the `sidekiq_processes` option you must run
+`sidekiq:uninstall` before and `sidekiq:install` after.
+
 ## Bundler
 
 If you'd like to prepend `bundle exec` to your sidekiq and sidekiqctl calls, modify the SSHKit command maps
@@ -73,7 +76,6 @@ in your deploy.rb file:
 SSHKit.config.command_map[:sidekiq] = "bundle exec sidekiq"
 SSHKit.config.command_map[:sidekiqctl] = "bundle exec sidekiqctl"
 ```
-
 
 ## Customizing the monit sidekiq templates
 

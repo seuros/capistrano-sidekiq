@@ -139,25 +139,18 @@ namespace :sidekiq do
   def create_systemd_template
     ctemplate = compiled_template
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
+    systemd_file_name = File.join(systemd_path, sidekiq_service_file_name)
+
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_service_unit_user) == :user
 
-    if sidekiq_processes > 1
-      range = 1..sidekiq_processes
+    temp_file_name = File.join('/tmp', sidekiq_service_file_name)
+    backend.upload!(StringIO.new(ctemplate), temp_file_name)
+    if fetch(:sidekiq_service_unit_user) == :system
+      backend.execute :sudo, :mv, temp_file_name, systemd_file_name
+      backend.execute :sudo, :systemctl, 'daemon-reload'
     else
-      range = 0..0
-    end
-    range.each do |index|
-      temp_file_name = File.join('/tmp', sidekiq_service_file_name(index))
-      systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(index))
-      backend.upload!(StringIO.new(ctemplate), temp_file_name)
-
-      if fetch(:sidekiq_service_unit_user) == :system
-        backend.execute :sudo, :mv, temp_file_name, systemd_file_name
-        backend.execute :sudo, :systemctl, 'daemon-reload'
-      else
-        backend.execute :mv, temp_file_name, systemd_file_name
-        backend.execute :systemctl, '--user', 'daemon-reload'
-      end
+      backend.execute :mv, temp_file_name, systemd_file_name
+      backend.execute :systemctl, '--user', 'daemon-reload'
     end
   end
 
@@ -196,14 +189,14 @@ namespace :sidekiq do
   def systemctl_command(*args, process: nil)
     execute_array =
       if fetch(:sidekiq_service_unit_user) == :system
-        %i[sudo systemctl]
+        [:sudo, :systemctl]
       else
         [:systemctl, '--user']
       end
-    if process && sidekiq_processes > 1
+    if process
       execute_array.push(
         *args, sidekiq_service_unit_name(process: process)
-        ).flatten
+      ).flatten
     else
       execute_array.push(*args, sidekiq_service_unit_name).flatten
     end
@@ -254,14 +247,21 @@ namespace :sidekiq do
     end.join(' ')
   end
 
-  def sidekiq_service_file_name(index = nil)
-    return "#{fetch(:sidekiq_service_unit_name)}.service" if index.to_i.zero?
-    "#{fetch(:sidekiq_service_unit_name)}@#{index}.service"
+  def sidekiq_service_file_name
+    if sidekiq_processes > 1
+      "#{fetch(:sidekiq_service_unit_name)}@.service"
+    else
+      "#{fetch(:sidekiq_service_unit_name)}.service"
+    end
   end
 
   def sidekiq_service_unit_name(process: nil)
-    if process && sidekiq_processes > 1
-      "#{fetch(:sidekiq_service_unit_name)}@#{process}"
+    if sidekiq_processes > 1
+      if process
+        "#{fetch(:sidekiq_service_unit_name)}@#{process}"
+      else
+        "#{fetch(:sidekiq_service_unit_name)}@{1..#{sidekiq_processes}}"
+      end
     else
       fetch(:sidekiq_service_unit_name)
     end
@@ -270,7 +270,11 @@ namespace :sidekiq do
   # process = 1 | sidekiq_systemd_1.yaml
   # process = nil | sidekiq_systemd_%i.yaml
   def sidekiq_systemd_config_name(process = nil)
-   "sidekiq_systemd_#{(process&.to_s || '%i')}.yaml"
+    if sidekiq_processes > 1
+      "sidekiq_systemd_#{(process&.to_s || '%i')}.yaml"
+    else
+      'sidekiq_systemd.yaml'
+    end
   end
 
   def config_per_process?
