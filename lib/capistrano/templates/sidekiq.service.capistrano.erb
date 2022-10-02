@@ -1,17 +1,12 @@
 # Source: https://github.com/mperham/sidekiq/blob/master/examples/systemd/sidekiq.service
 #
 # This file tells systemd how to run Sidekiq as a 24/7 long-running daemon.
-#
-# Customize this file based on your bundler location, app directory, etc.
-# Customize and copy this into /usr/lib/systemd/system (CentOS) or /lib/systemd/system (Ubuntu).
+
 # Then run:
-#   - systemctl enable <%= sidekiq_service_unit_name %>
-#   - systemctl {start,stop,restart} <%= sidekiq_service_unit_name %>
+#   - systemctl enable <%= sidekiq_service_unit_name(@config_file) %>
+#   - systemctl {start,stop,restart} <%= sidekiq_service_unit_name(@config_file) %>
 #
-# This file corresponds to a single Sidekiq process.  Add multiple copies
-# to run multiple processes (sidekiq-1, sidekiq-2, etc).
-#
-# Use `journalctl -u <%= sidekiq_service_unit_name %> -rn 100` to view the last 100 lines of log output.
+# Use `journalctl -u <%= sidekiq_service_unit_name(@config_file) %> -rn 100` to view the last 100 lines of log output.
 #
 [Unit]
 Description=Sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
@@ -25,16 +20,16 @@ Type=notify
 WatchdogSec=10
 <%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system  -%>
 WorkingDirectory=<%= current_path %>
-ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_queues %>
+ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>
 
-# Use `systemctl kill -s TSTP <%= sidekiq_service_unit_name %>` to quiet the Sidekiq process
+# Use `systemctl kill -s TSTP <% sidekiq_service_unit_name(@config_file) %>` to quiet the Sidekiq process
 UMask=0002
 
 <%- Array(fetch(:sidekiq_service_unit_env_files)).each do |file| %>
 <%="EnvironmentFile=#{file}" -%>
 <% end -%>
 <% Array(fetch(:sidekiq_service_unit_env_vars)).each do |environment_variable| %>
-<%="Environment=#{environment_variable}" -%>
+<%="Environment=\"#{environment_variable}\"" -%>
 <% end -%>
 
 # if we crash, restart
@@ -45,6 +40,6 @@ Restart=on-failure
 
 <%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) -%>
 
-SyslogIdentifier=<%= sidekiq_service_unit_name %>
+SyslogIdentifier=<%= sidekiq_service_unit_name(@config_file) %>
 [Install]
 WantedBy=<%=(fetch(:sidekiq_systemctl_user) == :system) ? "multi-user.target" : "default.target"%>
