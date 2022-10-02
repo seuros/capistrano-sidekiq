@@ -30,10 +30,13 @@ ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
 # Use `systemctl kill -s TSTP <%= sidekiq_service_unit_name %>` to quiet the Sidekiq process
 UMask=0002
 
-<%="EnvironmentFile=#{fetch(:sidekiq_service_unit_env_file)}" if fetch(:sidekiq_service_unit_env_file) %>
-<%- fetch(:sidekiq_service_unit_env_vars, []).each do |environment_variable| %>
-  <%="Environment=#{environment_variable}" %>
-<%- end %>
+<%- Array(fetch(:sidekiq_service_unit_env_files)).each do |file| %>
+<%="EnvironmentFile=#{file}" -%>
+<% end -%>
+<% Array(fetch(:sidekiq_service_unit_env_vars)).each do |environment_variable| %>
+<%="Environment=#{environment_variable}" -%>
+<% end -%>
+
 # if we crash, restart
 RestartSec=1
 Restart=on-failure
