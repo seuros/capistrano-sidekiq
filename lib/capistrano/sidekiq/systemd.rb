@@ -17,6 +17,8 @@ module Capistrano
       ## Sidekiq could have a stripped down or more complex version of the environment variables
       set_if_empty :sidekiq_service_unit_env_files, -> { fetch(:service_unit_env_files, []) }
       set_if_empty :sidekiq_service_unit_env_vars, -> { fetch(:service_unit_env_vars, []) }
+      
+      set_if_empty :sidekiq_config_files, ['sidekiq.yml']
 
       set_if_empty :sidekiq_service_templates_path, fetch(:service_templates_path, 'config/deploy/templates')
     end
