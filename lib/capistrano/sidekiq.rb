@@ -63,6 +63,9 @@ module Capistrano
 
       set_if_empty :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
       set_if_empty :sidekiq_error_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
+
+      set_if_empty :sidekiq_config_files, ['sidekiq.yml']
+
       # Rbenv, Chruby, and RVM integration
       append :rbenv_map_bins, 'sidekiq', 'sidekiqctl'
       append :rvm_map_bins, 'sidekiq', 'sidekiqctl'
