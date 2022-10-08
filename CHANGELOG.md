@@ -2,9 +2,7 @@
 
 ## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v2.3.0...master)
 - Rewrite to match capistrano3-puma api
-- Drop support for puma prior 5.1
-- Add support for systemd notify
-- 
+
 
 ## [2.3.0](https://github.com/seuros/capistrano-sidekiq/tree/2.3.0) (2022-05-17)
 

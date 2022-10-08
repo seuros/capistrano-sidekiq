@@ -13,7 +13,8 @@ Gem::Specification.new do |spec|
   spec.license = 'LGPL-3.0'
 
   spec.required_ruby_version = '>= 2.5.0'
-  spec.files = `git ls-files`.split($/)
+
+  spec.files = Dir.glob('lib/**/*') + %w(README.md CHANGELOG.md LICENSE.txt)
   spec.require_paths = ['lib']
 
   spec.add_dependency 'capistrano', '>= 3.9.0'
