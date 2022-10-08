@@ -18,7 +18,7 @@ After=syslog.target network.target
 Type=notify
 # If your Sidekiq process locks up, systemd's watchdog will restart it within seconds.
 WatchdogSec=10
-<%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system  -%>
+<%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system %>
 WorkingDirectory=<%= current_path %>
 ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>
 
@@ -26,10 +26,10 @@ ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %>
 UMask=0002
 
 <%- Array(fetch(:sidekiq_service_unit_env_files)).each do |file| %>
-<%="EnvironmentFile=#{file}" -%>
+<%="EnvironmentFile=#{file}" %>
 <% end -%>
 <% Array(fetch(:sidekiq_service_unit_env_vars)).each do |environment_variable| %>
-<%="Environment=\"#{environment_variable}\"" -%>
+<%="Environment=\"#{environment_variable}\"" %>
 <% end -%>
 
 # if we crash, restart
