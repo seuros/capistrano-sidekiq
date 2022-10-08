@@ -2,7 +2,10 @@
 
 ## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v2.3.0...master)
 - Rewrite to match capistrano3-puma api
-
+- Add support for multiple sidekiq configs (processes and queues can be configured with erb)
+- Add support to multiple EnvironmentFile
+- Add support to multiple EnvironmentVariables
+- Default role for sidekiq is now :worker instead of :app
 
 ## [2.3.0](https://github.com/seuros/capistrano-sidekiq/tree/2.3.0) (2022-05-17)
 
