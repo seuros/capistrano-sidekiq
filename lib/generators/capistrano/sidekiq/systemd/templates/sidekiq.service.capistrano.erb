@@ -1,0 +1,19 @@
+[Unit]
+Description=sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
+After=syslog.target network.target
+
+[Service]
+Type=simple
+Environment=RAILS_ENV=<%= fetch(:rails_env) %>
+WorkingDirectory=<%= fetch(:deploy_to) %>/current
+ExecStart=<%= fetch(:bundler_path, '/usr/local/bin/bundler') %> exec sidekiq -e <%= fetch(:rails_env) %>
+ExecReload=/bin/kill -TSTP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+
+RestartSec=1
+Restart=on-failure
+
+SyslogIdentifier=sidekiq
+
+[Install]
+WantedBy=default.target

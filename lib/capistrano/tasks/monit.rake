@@ -1,10 +1,12 @@
 namespace :load do
   task :defaults do
     set :sidekiq_monit_conf_dir, '/etc/monit/conf.d'
+    set :sidekiq_monit_conf_file, -> { "#{sidekiq_service_name}.conf" }
     set :sidekiq_monit_use_sudo, true
     set :monit_bin, '/usr/bin/monit'
     set :sidekiq_monit_default_hooks, true
     set :sidekiq_monit_templates_path, 'config/deploy/templates'
+    set :sidekiq_monit_group, nil
   end
 end
 
@@ -26,11 +28,11 @@ namespace :sidekiq do
 
     desc 'Config Sidekiq monit-service'
     task :config do
-      on roles(fetch(:sidekiq_role)) do |role|
+      on roles(fetch(:sidekiq_roles)) do |role|
         @role = role
         upload_sidekiq_template 'sidekiq_monit', "#{fetch(:tmp_dir)}/monit.conf", @role
 
-        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{sidekiq_service_name}.conf"
+        mv_command = "mv #{fetch(:tmp_dir)}/monit.conf #{fetch(:sidekiq_monit_conf_dir)}/#{fetch(:sidekiq_monit_conf_file)}"
         sudo_if_needed mv_command
 
         sudo_if_needed "#{fetch(:monit_bin)} reload"
@@ -39,7 +41,7 @@ namespace :sidekiq do
 
     desc 'Monitor Sidekiq monit-service'
     task :monitor do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} monitor #{sidekiq_service_name(idx)}"
@@ -53,7 +55,7 @@ namespace :sidekiq do
 
     desc 'Unmonitor Sidekiq monit-service'
     task :unmonitor do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           begin
             sudo_if_needed "#{fetch(:monit_bin)} unmonitor #{sidekiq_service_name(idx)}"
@@ -66,7 +68,7 @@ namespace :sidekiq do
 
     desc 'Start Sidekiq monit-service'
     task :start do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} start #{sidekiq_service_name(idx)}"
         end
@@ -75,7 +77,7 @@ namespace :sidekiq do
 
     desc 'Stop Sidekiq monit-service'
     task :stop do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed "#{fetch(:monit_bin)} stop #{sidekiq_service_name(idx)}"
         end
@@ -84,7 +86,7 @@ namespace :sidekiq do
 
     desc 'Restart Sidekiq monit-service'
     task :restart do
-      on roles(fetch(:sidekiq_role)) do
+      on roles(fetch(:sidekiq_roles)) do
         fetch(:sidekiq_processes).times do |idx|
           sudo_if_needed"#{fetch(:monit_bin)} restart #{sidekiq_service_name(idx)}"
         end
@@ -92,7 +94,7 @@ namespace :sidekiq do
     end
 
     def sidekiq_service_name(index=nil)
-      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + index.to_s
+      fetch(:sidekiq_service_name, "sidekiq_#{fetch(:application)}_#{fetch(:sidekiq_env)}") + (index ? "_#{index}" : '')
     end
 
     def sidekiq_config
@@ -119,6 +121,12 @@ namespace :sidekiq do
       end
     end
 
+    def sidekiq_require
+      if fetch(:sidekiq_require)
+        "--require #{fetch(:sidekiq_require)}"
+      end
+    end
+
     def sidekiq_options_per_process
       fetch(:sidekiq_options_per_process) || []
     end
@@ -131,5 +139,30 @@ namespace :sidekiq do
       fetch(:sidekiq_monit_use_sudo)
     end
 
+    def upload_sidekiq_template(from, to, role)
+      template = sidekiq_template(from, role)
+      upload!(StringIO.new(ERB.new(template).result(binding)), to)
+    end
+
+    def sidekiq_template(name, role)
+      local_template_directory = fetch(:sidekiq_monit_templates_path)
+
+      search_paths = [
+        "#{name}-#{role.hostname}-#{fetch(:stage)}.erb",
+        "#{name}-#{role.hostname}.erb",
+        "#{name}-#{fetch(:stage)}.erb",
+        "#{name}.erb"
+      ].map { |filename| File.join(local_template_directory, filename) }
+
+      global_search_path = File.expand_path(
+        File.join(*%w[.. .. .. generators capistrano sidekiq monit templates], "#{name}.conf.erb"),
+        __FILE__
+      )
+
+      search_paths << global_search_path
+
+      template_path = search_paths.detect { |path| File.file?(path) }
+      File.read(template_path)
+    end
   end
 end
