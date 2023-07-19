@@ -11,6 +11,7 @@ module Capistrano
       set_if_empty :service_unit_user, :user
       set_if_empty :systemctl_user, fetch(:service_unit_user, :user) == :user
 
+      set_if_empty :sidekiq_systemctl_user, -> { fetch(:service_unit_user) }
       set_if_empty :sidekiq_service_unit_name, -> { "#{fetch(:application)}_sidekiq_#{fetch(:stage)}" }
       set_if_empty :sidekiq_lingering_user, -> { fetch(:lingering_user, fetch(:user)) }
 
@@ -24,7 +25,7 @@ module Capistrano
     def systemd_command(*args)
       command = [fetch(:systemctl_bin)]
 
-      unless fetch(:service_unit_user) == :system
+      unless fetch(:sidekiq_systemctl_user) == :system
         command << "--user"
       end
 
@@ -32,7 +33,7 @@ module Capistrano
     end
 
     def sudo_if_needed(*command)
-      if fetch(:service_unit_user) == :system
+      if fetch(:sidekiq_systemctl_user) == :system
         backend.sudo command.map(&:to_s).join(" ")
       else
         backend.execute(*command)
