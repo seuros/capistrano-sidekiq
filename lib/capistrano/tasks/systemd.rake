@@ -14,7 +14,9 @@ namespace :sidekiq do
     task command do
       on roles fetch(:sidekiq_roles) do |role|
         git_plugin.switch_user(role) do
-          git_plugin.systemctl_command(command)
+          git_plugin.process_block do |process|
+            git_plugin.systemctl_command(command, process: process)
+          end
         end
       end
     end
@@ -84,7 +86,9 @@ namespace :sidekiq do
             git_plugin.create_systemd_config_symlink(process)
           end
         end
-        git_plugin.systemctl_command(:enable)
+        git_plugin.process_block do |process|
+          git_plugin.systemctl_command(:enable, process: process)
+        end
 
         if fetch(:sidekiq_service_unit_user) != :system && fetch(:sidekiq_enable_lingering)
           execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
