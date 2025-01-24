@@ -1,8 +1,0 @@
-# Monit configuration for Sidekiq
-# Service name: <%= sidekiq_service_name %>
-#
-check process <%= sidekiq_service_name %>
-  matching 'sidekiq .* <%= fetch(:application) %>'
-  start program = "/bin/su - <%= sidekiq_user(role) %> -c 'cd <%= current_path %> && <%= SSHKit.config.command_map[:bundle] %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %> <%= sidekiq_concurrency %> <%= sidekiq_require %> <%= sidekiq_queues %> <%= sidekiq_logfile ? ">> #{sidekiq_logfile} 2>&1" : nil %> &'" with timeout <%= fetch(:sidekiq_timeout).to_i + 10 %> seconds
-  stop program = "/bin/su - <%= sidekiq_user(role) %> -c 'ps ax | grep "<%= "sidekiq .* #{fetch(:application)}" %>" | grep -v grep | awk "{print \$1}" | xargs --no-run-if-empty kill'" with timeout <%= fetch(:sidekiq_timeout).to_i + 10  %> seconds
-  group <%= fetch(:sidekiq_monit_group) || fetch(:application) %>-sidekiq
