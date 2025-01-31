@@ -1,10 +1,26 @@
 # Source: https://github.com/mperham/sidekiq/blob/master/examples/systemd/sidekiq.service
 #
 # This file tells systemd how to run Sidekiq as a 24/7 long-running daemon.
-
+#
+# Customize this file based on your bundler location, app directory, etc.
+#
+# If you are going to run this as a user service (or you are going to use capistrano-sidekiq)
+# Customize and copy this to ~/.config/systemd/user
+# Then run:
+#   - systemctl --user enable <%= sidekiq_service_unit_name(@config_file) %>
+#   - systemctl --user {start,stop,restart} <%= sidekiq_service_unit_name(@config_file) %>
+# Also you might want to run:
+#   - loginctl enable-linger <%= fetch(:sidekiq_lingering_user) %>
+# So that the service is not killed when the user logs out.
+#
+# If you are going to run this as a system service
+# Customize and copy this into /usr/lib/systemd/system (CentOS) or /lib/systemd/system (Ubuntu).
 # Then run:
 #   - systemctl enable <%= sidekiq_service_unit_name(@config_file) %>
 #   - systemctl {start,stop,restart} <%= sidekiq_service_unit_name(@config_file) %>
+#
+# This file corresponds to a single Sidekiq process.  Add multiple copies
+# to run multiple processes (sidekiq-1, sidekiq-2, etc).
 #
 # Use `journalctl -u <%= sidekiq_service_unit_name(@config_file) %> -rn 100` to view the last 100 lines of log output.
 #
@@ -14,16 +30,50 @@ Description=Sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
 # consider adding redis-server.service if Redis is local and systemd-managed.
 After=syslog.target network.target
 
+# See these pages for lots of options:
+#
+#   https://www.freedesktop.org/software/systemd/man/systemd.service.html
+#   https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+#
+# THOSE PAGES ARE CRITICAL FOR ANY LINUX DEVOPS WORK; read them multiple
+# times! systemd is a critical tool for all developers to know and understand.
+#
 [Service]
+#
+#      !!!!  !!!!  !!!!
+#
+# As of v6.0.6, Sidekiq automatically supports systemd's `Type=notify` and watchdog service
+# monitoring. If you are using an earlier version of Sidekiq, change this to `Type=simple`
+# and remove the `WatchdogSec` line.
+#
+#      !!!!  !!!!  !!!!
+#
 Type=notify
+NotifyAccess=all
 # If your Sidekiq process locks up, systemd's watchdog will restart it within seconds.
 WatchdogSec=10
-<%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system %>
+
 WorkingDirectory=<%= current_path %>
+# If you use rbenv:
+# ExecStart=/bin/bash -lc 'exec /home/deploy/.rbenv/shims/bundle exec sidekiq -e production'
+# If you use the system's ruby:
+# ExecStart=/usr/local/bin/bundle exec sidekiq -e production
+# If you use rvm in production without gemset and your ruby version is 2.6.5
+# ExecStart=/home/deploy/.rvm/gems/ruby-2.6.5/wrappers/bundle exec sidekiq -e production
+# If you use rvm in production with gemset and your ruby version is 2.6.5
+# ExecStart=/home/deploy/.rvm/gems/ruby-2.6.5@gemset-name/wrappers/bundle exec sidekiq -e production
+# If you use rvm in production with gemset and ruby version/gemset is specified in .ruby-version,
+# .ruby-gemsetor or .rvmrc file in the working directory
 ExecStart=<%= expanded_bundle_path %> exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>
 
 # Use `systemctl kill -s TSTP <% sidekiq_service_unit_name(@config_file) %>` to quiet the Sidekiq process
-UMask=0002
+
+# Uncomment this if you are going to use this as a system service
+# if using as a user service then leave commented out, or you will get an error trying to start the service
+# !!! Change this to your deploy user account if you are using this as a system service !!!
+# User=deploy
+# Group=deploy
+# UMask=0002
 
 <%- Array(fetch(:sidekiq_service_unit_env_files)).each do |file| %>
 <%="EnvironmentFile=#{file}" %>
@@ -34,12 +84,14 @@ UMask=0002
 
 # if we crash, restart
 RestartSec=1
-Restart=on-failure
+Restart=always
 
+# output goes to /var/log/syslog (Ubuntu) or /var/log/messages (CentOS)
 <%="StandardOutput=append:#{fetch(:sidekiq_log)}" if fetch(:sidekiq_log) -%>
-
 <%="StandardError=append:#{fetch(:sidekiq_error_log)}" if fetch(:sidekiq_error_log) -%>
 
+# This will default to "bundler" if we don't specify it
 SyslogIdentifier=<%= sidekiq_service_unit_name(@config_file) %>
+
 [Install]
 WantedBy=<%=(fetch(:sidekiq_systemctl_user) == :system) ? "multi-user.target" : "default.target"%>
