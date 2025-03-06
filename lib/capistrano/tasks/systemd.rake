@@ -7,7 +7,6 @@ namespace :sidekiq do
     start: 'Start Sidekiq',
     stop: 'Stop Sidekiq (graceful shutdown within timeout, put unfinished tasks back to Redis)',
     status: 'Get Sidekiq Status',
-    restart: 'Restart Sidekiq'
   }
   standard_actions.each do |command, description|
     desc description
@@ -17,6 +16,61 @@ namespace :sidekiq do
           git_plugin.config_files(role).each do |config_file|
             git_plugin.execute_systemd(command, git_plugin.sidekiq_service_file_name(config_file))
           end
+        end
+      end
+    end
+  end
+
+  desc "Custom Restart Sidekiq (Quiet active service and start inactive service)"
+  task :restart do
+    on roles fetch(:sidekiq_roles) do |role|
+      git_plugin.switch_user(role) do
+        colors = SSHKit::Color.new($stdout)
+        processes = git_plugin.config_files(role).each_with_object([]) do |config_file, result|
+          info colors.colorize("config_files: #{config_file}", :green)
+          active_process = nil
+          inactive_process = nil
+          [1, 2].each do |process|
+            sidekiq_service_unit_name = git_plugin.sidekiq_service_unit_name(config_file, process: process)
+            command_args =
+              if fetch(:sidekiq_service_unit_user) == :system
+                [:sudo, "systemctl"]
+              else
+                ["systemctl", "--user"]
+              end
+  
+            command_args.push(:status, sidekiq_service_unit_name)
+            status = capture(*command_args, raise_on_non_zero_exit: false)
+
+            active_status_match = status.match(/Active: active/)
+            inactive_status_match = status.match(/Active: inactive/)
+  
+            if active_status_match
+              active_process = sidekiq_service_unit_name
+            elsif inactive_status_match
+              inactive_process = sidekiq_service_unit_name
+            else
+              info colors.colorize("Process ##{process} status not match: #{status}", :red)
+            end
+          end
+
+          sidekiq_service_unit_name = git_plugin.sidekiq_service_unit_name(config_file)
+          if active_process.nil?
+            info colors.colorize("Can not find active process of #{sidekiq_service_unit_name}", :yellow)
+          end
+          if inactive_process.nil?
+            info colors.colorize(
+              "Can not find inactive process of #{sidekiq_service_unit_name}, You should manually restart sidekiq", :red
+            )
+            return
+          end
+          result << [active_process, inactive_process]
+        end
+      
+        processes.each do |(active_process, inactive_process)|
+          info colors.colorize("Quiet Process ##{active_process || "-"}, Start Process ##{inactive_process}", :green)
+          git_plugin.execute_systemd("kill -s TSTP", active_process) unless active_process.nil?
+          git_plugin.execute_systemd("start", inactive_process)
         end
       end
     end
@@ -124,11 +178,17 @@ namespace :sidekiq do
     end
   end
 
-  def sidekiq_service_unit_name(config_file)
-    if config_file != "sidekiq.yml"
-      fetch(:sidekiq_service_unit_name) + "." + config_file.split(".")[0..-2].join(".")
+  def sidekiq_service_unit_name(config_file, process: nil)
+    service_unit_name =
+      if config_file != "sidekiq.yml"
+        fetch(:sidekiq_service_unit_name) + "." + config_file.split(".")[0..-2].join(".")
+      else
+        fetch(:sidekiq_service_unit_name)
+      end
+    if process != nil && process > 1
+      "#{service_unit_name}_#{process}"
     else
-      fetch(:sidekiq_service_unit_name)
+      service_unit_name
     end
   end
 
