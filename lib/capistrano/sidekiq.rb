@@ -33,7 +33,7 @@ module Capistrano
       if su_user == role.user
         yield
       else
-        as su_user, &block
+        backend.as su_user, &block
       end
     end
 
