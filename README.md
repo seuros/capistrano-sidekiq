@@ -86,18 +86,73 @@ set :sidekiq_error_log, -> { File.join(shared_path, 'log', 'sidekiq.error.log') 
 
 ### Per-Server Configuration
 
-You can configure Sidekiq differently for specific servers:
+You can configure Sidekiq differently for specific servers, allowing you to run different Sidekiq processes with different configurations on different servers.
+
+#### Basic Per-Server Setup
 
 ```ruby
 # config/deploy/production.rb
 server 'worker1.example.com', 
   roles: [:worker], 
-  sidekiq_config_files: ['sidekiq_1.yml'],
-  sidekiq_user: 'custom_user'
+  sidekiq_config_files: ['sidekiq_high_priority.yml']
 
 server 'worker2.example.com', 
   roles: [:worker], 
-  sidekiq_config_files: ['sidekiq_2.yml']
+  sidekiq_config_files: ['sidekiq_low_priority.yml']
+```
+
+#### Advanced Per-Server Configuration
+
+```ruby
+# Different users and multiple processes per server
+server 'worker1.example.com',
+  roles: [:worker],
+  sidekiq_config_files: ['sidekiq_critical.yml', 'sidekiq_default.yml'],
+  sidekiq_user: 'sidekiq_critical',
+  sidekiq_systemctl_user: :system  # Run as system service on this server
+
+server 'worker2.example.com',
+  roles: [:worker],
+  sidekiq_config_files: ['sidekiq_batch.yml'],
+  sidekiq_user: 'sidekiq_batch',
+  sidekiq_service_unit_env_vars: ['MALLOC_ARENA_MAX=4']  # Server-specific env vars
+```
+
+#### How It Works
+
+1. **Configuration Files**: Each server can have its own set of `sidekiq_config_files`
+2. **Service Creation**: A separate systemd service is created for each config file
+3. **Service Naming**: Services are named as `<app>_sidekiq_<stage>` for the default `sidekiq.yml`, or `<app>_sidekiq_<stage>.<config_name>` for additional configs
+4. **Independent Control**: Each service can be started, stopped, and restarted independently
+
+#### Example Configurations
+
+**config/sidekiq_high_priority.yml:**
+```yaml
+:concurrency: 10
+:queues:
+  - [critical, 2]
+  - [high, 1]
+```
+
+**config/sidekiq_low_priority.yml:**
+```yaml
+:concurrency: 5
+:queues:
+  - [low, 1]
+  - [default, 1]
+```
+
+#### Deployment Commands
+
+When using per-server configurations, Capistrano will:
+- Install the appropriate services on each server during `cap production sidekiq:install`
+- Start only the configured services on each server during `cap production sidekiq:start`
+- Manage each server's services independently
+
+You can also target specific servers:
+```bash
+cap production sidekiq:restart --hosts=worker1.example.com
 ```
 
 ## Available Tasks
@@ -116,6 +171,10 @@ cap sidekiq:uninstall          # Remove Sidekiq systemd service
 cap sidekiq:enable             # Enable Sidekiq systemd service
 cap sidekiq:disable            # Disable Sidekiq systemd service
 ```
+
+## Systemd Integration
+
+For detailed information about systemd integration, see [Systemd Integration Guide](docs/SYSTEMD_INTEGRATION.md).
 
 ## Working with Systemd Logs
 

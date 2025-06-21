@@ -1,11 +1,33 @@
 # Changelog
 
-## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v2.3.0...master)
+## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.0.0...master)
+
+### Fixed
+- Fix undefined method 'as' error by properly calling backend.as (#327)
+- Fix inconsistent systemd variable naming (systemctl_user vs sidekiq_systemctl_user)
+- Fix systemd lingering configuration issues (#311)
+- Fix sidekiq:uninstall to work without sudo for user services (#307)
+- Align configuration pattern with capistrano-puma for consistency
+
+### Added
+- Add comprehensive documentation for per-server configuration (#312)
+- Add detailed systemd integration guide (#240)
+- Add GitHub Actions CI workflow
+- Add Docker-based integration tests
+- Add shared configuration support with other Capistrano service gems
+
+### Changed
+- Use consistent sidekiq-prefixed variables for systemd configuration
+- Improve README documentation with shared configuration examples
+
+## [3.0.0](https://github.com/seuros/capistrano-sidekiq/compare/v2.3.0...v3.0.0)
 - Rewrite to match capistrano3-puma api
 - Add support for multiple sidekiq configs (processes and queues can be configured with erb)
 - Add support to multiple EnvironmentFile
 - Add support to multiple EnvironmentVariables
 - Default role for sidekiq is now :worker instead of :app
+- Remove monit support
+- Remove deprecated --index argument for Sidekiq 6.0+ compatibility (#234)
 
 ## [2.3.0](https://github.com/seuros/capistrano-sidekiq/tree/2.3.0) (2022-05-17)
 
