@@ -9,9 +9,13 @@ module Capistrano
     def set_defaults
       set_if_empty :systemctl_bin, '/bin/systemctl'
       set_if_empty :service_unit_user, :user
-      set_if_empty :systemctl_user, fetch(:service_unit_user, :user) == :user
-
+      set_if_empty :systemctl_user, -> { fetch(:service_unit_user, :user) == :user }
+      
+      set_if_empty :sidekiq_systemctl_bin, -> { fetch(:systemctl_bin) }
       set_if_empty :sidekiq_service_unit_name, -> { "#{fetch(:application)}_sidekiq_#{fetch(:stage)}" }
+      
+      set_if_empty :sidekiq_systemctl_user, -> { fetch(:service_unit_user) }
+      set_if_empty :sidekiq_enable_lingering, -> { fetch(:sidekiq_systemctl_user) != :system }
       set_if_empty :sidekiq_lingering_user, -> { fetch(:lingering_user, fetch(:user)) }
 
       ## Sidekiq could have a stripped down or more complex version of the environment variables
@@ -21,10 +25,19 @@ module Capistrano
       set_if_empty :sidekiq_service_templates_path, fetch(:service_templates_path, 'config/deploy/templates')
     end
 
-    def systemd_command(*args)
-      command = [fetch(:systemctl_bin)]
+    def fetch_systemd_unit_path
+      if fetch(:sidekiq_systemctl_user) == :system
+        "/etc/systemd/system/"
+      else
+        home_dir = backend.capture :pwd
+        File.join(home_dir, ".config", "systemd", "user")
+      end
+    end
 
-      unless fetch(:service_unit_user) == :system
+    def systemd_command(*args)
+      command = [fetch(:sidekiq_systemctl_bin)]
+
+      unless fetch(:sidekiq_systemctl_user) == :system
         command << "--user"
       end
 
@@ -32,7 +45,7 @@ module Capistrano
     end
 
     def sudo_if_needed(*command)
-      if fetch(:service_unit_user) == :system
+      if fetch(:sidekiq_systemctl_user) == :system
         backend.sudo command.map(&:to_s).join(" ")
       else
         backend.execute(*command)

@@ -46,13 +46,31 @@ set :sidekiq_config_files, ['sidekiq.yml']
 set :sidekiq_config_files, ['sidekiq.yml', 'sidekiq-high-priority.yml']
 ```
 
+### Shared Configuration with Other Gems
+
+This gem follows the Capistrano convention of sharing common settings across multiple service gems (e.g., capistrano-puma, capistrano-sidekiq). The following settings are shared:
+
+- `:service_unit_user` - Determines if services run as system or user services
+- `:systemctl_bin` - Path to the systemctl binary
+- `:lingering_user` - User for systemd lingering (for user services)
+- `:service_unit_env_files` - Shared environment files
+- `:service_unit_env_vars` - Shared environment variables
+
+Each gem can override these with prefixed versions (e.g., `:sidekiq_systemctl_user`).
+
 ### Advanced Configuration
 
 ```ruby
-# Systemd service settings
-set :service_unit_user, :system              # Run as system service (:system or :user)
-set :systemctl_user, true                    # Run systemctl in user mode
+# Shared systemd settings (can be used by multiple Capistrano gems like capistrano-puma)
+set :service_unit_user, :user                # Run as user or system service (:system or :user)
+set :systemctl_bin, '/bin/systemctl'         # Path to systemctl binary
+set :lingering_user, 'deploy'                # User to enable lingering for (defaults to :user)
+
+# Sidekiq-specific overrides (optional - defaults to shared settings above)
+set :sidekiq_systemctl_user, :system         # Override service_unit_user for Sidekiq only
+set :sidekiq_systemctl_bin, '/usr/bin/systemctl'  # Override systemctl_bin for Sidekiq only
 set :sidekiq_service_unit_name, "custom_sidekiq_#{fetch(:stage)}"  # Custom service name
+set :sidekiq_lingering_user, 'sidekiq'       # Override lingering user for Sidekiq only
 
 # Environment configuration
 set :sidekiq_service_unit_env_files, ['/etc/environment']  # Environment files

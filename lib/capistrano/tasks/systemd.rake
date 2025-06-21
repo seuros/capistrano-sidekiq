@@ -59,7 +59,7 @@ namespace :sidekiq do
         git_plugin.execute_systemd("enable", git_plugin.sidekiq_service_file_name(config_file))
       end
 
-      if fetch(:systemctl_user) && fetch(:sidekiq_lingering_user)
+      if fetch(:sidekiq_enable_lingering) && fetch(:sidekiq_lingering_user)
         execute :loginctl, "enable-linger", fetch(:sidekiq_lingering_user)
       end
     end
@@ -85,14 +85,14 @@ namespace :sidekiq do
 
   def create_systemd_template(role)
     systemd_path = fetch(:service_unit_path, fetch_systemd_unit_path)
-    backend.execute :mkdir, '-p', systemd_path if fetch(:systemctl_user)
+    backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_systemctl_user) != :system
 
     config_files(role).each do |config_file|
         ctemplate = compiled_template(config_file)
         temp_file_name = File.join('/tmp', "sidekiq.#{config_file}.service")
         systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
         backend.upload!(StringIO.new(ctemplate), temp_file_name)
-        if fetch(:systemctl_user)
+        if fetch(:sidekiq_systemctl_user) != :system
           warn "Moving #{temp_file_name} to #{systemd_file_name}"
           backend.execute :mv, temp_file_name, systemd_file_name
         else
@@ -107,7 +107,7 @@ namespace :sidekiq do
 
     config_files(role).each do |config_file|
       systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
-      if fetch(:systemctl_user)
+      if fetch(:sidekiq_systemctl_user) != :system
         warn "Deleting #{systemd_file_name}"
         backend.execute :rm, "-f", systemd_file_name
       else
