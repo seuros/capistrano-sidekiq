@@ -20,6 +20,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'capistrano', '>= 3.9.0'
   spec.add_dependency 'capistrano-bundler'
   spec.add_dependency 'sidekiq', '>= 6.0.6'
+  
+  spec.add_development_dependency 'minitest', '~> 5.0'
+  spec.add_development_dependency 'rake', '~> 13.0'
+  
   spec.post_install_message = '
     Version 3.0.0 is a major release. Please see README.md, breaking changes are listed in CHANGELOG.md
   '
