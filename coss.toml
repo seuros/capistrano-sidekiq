@@ -1,0 +1,95 @@
+# COSS (Contribution Open Source Specification) v0.0.2
+# This file provides standardized metadata for the capistrano-sidekiq project
+
+[project]
+name = "capistrano-sidekiq"
+version = "3.0.0"
+description = "Sidekiq integration for Capistrano - manage Sidekiq processes during deployments"
+licenses = ["LGPL-3.0"]
+homepage = "https://github.com/seuros/capistrano-sidekiq"
+
+[repository]
+url = "https://github.com/seuros/capistrano-sidekiq"
+type = "git"
+default_branch = "master"
+
+[issues]
+url = "https://github.com/seuros/capistrano-sidekiq/issues"
+type = "github"
+
+[technical]
+primary_languages = ["Ruby"]
+frameworks = ["Capistrano", "Sidekiq"]
+minimum_ruby_version = "2.5.0"
+
+[build]
+commands = ["bundle install"]
+test_commands = ["bundle exec rake test"]
+
+[dependencies]
+runtime = [
+  "capistrano >= 3.9.0",
+  "capistrano-bundler",
+  "sidekiq >= 6.0.6"
+]
+development = [
+  "minitest ~> 5.0",
+  "rake ~> 13.0"
+]
+
+[maintainers]
+[[maintainers.primary]]
+name = "Abdelkader Boudih"
+email = "terminale@gmail.com"
+github = "seuros"
+
+[maintenance]
+status = "active"
+release_process = """
+1. Update version in lib/capistrano/sidekiq/version.rb
+2. Update CHANGELOG.md
+3. Run tests: bundle exec rake test
+4. Build gem: bundle exec rake build
+5. Release: bundle exec rake release
+"""
+
+[quality]
+linting = "rubocop (planned)"
+testing_framework = "minitest"
+ci_platform = "GitHub Actions"
+code_coverage = "planned"
+
+[documentation]
+primary_docs = "README.md"
+additional_docs = [
+  "docs/SYSTEMD_INTEGRATION.md",
+  "SYSTEMD.md",
+  "CHANGELOG.md"
+]
+api_docs = "YARD (planned)"
+
+[community]
+contributing_guide = "README.md#contributing"
+code_of_conduct = "planned"
+support_channels = [
+  "GitHub Issues",
+  "GitHub Discussions (planned)"
+]
+
+[security]
+security_policy = "planned"
+vulnerability_reporting = "via GitHub Security Advisories"
+
+[compatibility]
+sidekiq_versions = "6.0+"
+capistrano_versions = "3.9+"
+ruby_versions = "2.5+"
+systemd_versions = "206+"
+
+[features]
+systemd_integration = true
+multiple_processes = true
+per_server_configuration = true
+user_switching = true
+lingering_support = true
+custom_templates = true
