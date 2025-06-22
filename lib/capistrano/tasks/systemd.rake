@@ -13,7 +13,7 @@ namespace :sidekiq do
     desc description
     task command do
       on roles fetch(:sidekiq_roles) do |role|
-        git_plugin.switch_user(role) do
+        git_plugin.sidekiq_switch_user(role) do
           git_plugin.config_files(role).each do |config_file|
             git_plugin.execute_systemd(command, git_plugin.sidekiq_service_file_name(config_file))
           end
@@ -25,7 +25,7 @@ namespace :sidekiq do
   desc 'Quiet Sidekiq (stop fetching new tasks from Redis)'
   task :quiet do
     on roles fetch(:sidekiq_roles) do |role|
-      git_plugin.switch_user(role) do
+      git_plugin.sidekiq_switch_user(role) do
         git_plugin.quiet_sidekiq(role)
       end
     end
@@ -34,7 +34,7 @@ namespace :sidekiq do
   desc 'Install Sidekiq systemd service'
   task :install do
     on roles fetch(:sidekiq_roles) do |role|
-      git_plugin.switch_user(role) do
+      git_plugin.sidekiq_switch_user(role) do
         git_plugin.create_systemd_template(role)
       end
     end
@@ -45,7 +45,7 @@ namespace :sidekiq do
   task :uninstall do
     invoke 'sidekiq:disable'
     on roles fetch(:sidekiq_roles) do |role|
-      git_plugin.switch_user(role) do
+      git_plugin.sidekiq_switch_user(role) do
         git_plugin.rm_systemd_service(role)
       end
     end
@@ -87,10 +87,10 @@ namespace :sidekiq do
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_systemctl_user) != :system
 
     config_files(role).each do |config_file|
-      ctemplate = compiled_template(config_file)
+      ctemplate = compiled_template_sidekiq('sidekiq.service.capistrano', role, config_file)
       temp_file_name = File.join('/tmp', "sidekiq.#{config_file}.service")
       systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
-      backend.upload!(StringIO.new(ctemplate), temp_file_name)
+      backend.upload!(ctemplate, temp_file_name)
       if fetch(:sidekiq_systemctl_user) == :system
         warn "Installing #{systemd_file_name} as root"
         backend.execute :sudo, :mv, temp_file_name, systemd_file_name
