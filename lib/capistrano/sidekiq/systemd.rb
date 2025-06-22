@@ -23,6 +23,10 @@ module Capistrano
       set_if_empty :sidekiq_service_unit_env_vars, -> { fetch(:service_unit_env_vars, []) }
 
       set_if_empty :sidekiq_service_templates_path, fetch(:service_templates_path, 'config/deploy/templates')
+      
+      # Allow customization of the sidekiq command
+      set_if_empty :sidekiq_command, 'sidekiq'
+      set_if_empty :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)}" }
     end
 
     def fetch_systemd_unit_path

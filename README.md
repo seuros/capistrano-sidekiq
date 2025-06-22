@@ -83,6 +83,22 @@ set :sidekiq_service_unit_env_vars, [                      # Environment variabl
 # Logging configuration
 set :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
 set :sidekiq_error_log, -> { File.join(shared_path, 'log', 'sidekiq.error.log') }
+
+# Command customization
+set :sidekiq_command, 'sidekiq'  # Use 'sidekiq' or 'sidekiqswarm' for Enterprise
+set :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)}" }
+
+# Sidekiq Enterprise - Swarm configuration
+set :sidekiq_command, 'sidekiqswarm'
+set :sidekiq_swarm_env_vars, [
+  'SIDEKIQ_COUNT=5',           # Number of processes
+  'SIDEKIQ_MAXMEM_MB=768',     # Memory limit per process
+  'SIDEKIQ_PRELOAD_APP=1'      # Preload app for memory efficiency
+]
+# Merge swarm env vars with regular env vars
+set :sidekiq_service_unit_env_vars, -> { 
+  fetch(:sidekiq_service_unit_env_vars, []) + fetch(:sidekiq_swarm_env_vars, [])
+}
 ```
 
 ### Per-Server Configuration
@@ -176,6 +192,49 @@ cap sidekiq:disable            # Disable Sidekiq systemd service
 ## Systemd Integration
 
 For detailed information about systemd integration, see [Systemd Integration Guide](docs/SYSTEMD_INTEGRATION.md).
+
+## Sidekiq Enterprise (Swarm) Support
+
+This gem supports Sidekiq Enterprise's `sidekiqswarm` command for managing multiple processes with a single service.
+
+### Configuration
+
+```ruby
+# config/deploy.rb
+
+# Use sidekiqswarm instead of sidekiq
+set :sidekiq_command, 'sidekiqswarm'
+
+# Configure swarm-specific environment variables
+set :sidekiq_service_unit_env_vars, [
+  'SIDEKIQ_COUNT=10',          # Number of processes to spawn
+  'SIDEKIQ_MAXMEM_MB=512',     # Memory limit per process
+  'SIDEKIQ_PRELOAD_APP=1',     # Preload Rails app for memory efficiency
+  'RAILS_ENV=production'
+]
+
+# Optional: Configure shutdown timeout for graceful stops
+set :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)} -t 30" }
+```
+
+### Benefits of Sidekiqswarm
+
+- **Single Service**: Manage N processes with one systemd service
+- **Memory Efficiency**: Preload app once, fork processes
+- **Auto-restart**: Processes that exceed memory limits are automatically restarted
+- **Simplified Management**: No need for multiple service files
+
+### Per-Server Swarm Configuration
+
+```ruby
+server 'worker1.example.com',
+  roles: [:worker],
+  sidekiq_service_unit_env_vars: ['SIDEKIQ_COUNT=20', 'SIDEKIQ_MAXMEM_MB=1024']
+
+server 'worker2.example.com',
+  roles: [:worker],
+  sidekiq_service_unit_env_vars: ['SIDEKIQ_COUNT=5', 'SIDEKIQ_MAXMEM_MB=512']
+```
 
 ## Working with Systemd Logs
 
