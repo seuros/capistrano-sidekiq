@@ -33,7 +33,7 @@ class UnitTest < Minitest::Test
   end
 
   def test_version_constant
-    assert_match(/^\d+\.\d+\.\d+/, Capistrano::SidekiqVERSION)
+    assert_match(/^\d+\.\d+\.\d+/, Capistrano::SIDEKIQ_VERSION)
   end
 end
 

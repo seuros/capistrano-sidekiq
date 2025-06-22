@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Capistrano
-  module Sidekiq
+  class Sidekiq
     class Systemd < Capistrano::Plugin
       include SidekiqCommon
       def define_tasks

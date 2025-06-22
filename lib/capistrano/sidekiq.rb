@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'capistrano/bundler'
+require 'capistrano/bundler' unless ENV['TEST']
 require 'capistrano/plugin'
 
 module Capistrano
@@ -42,9 +42,9 @@ module Capistrano
         fetch(:sidekiq_user)
       else
         properties = role.properties
-        properties.fetch(:sidekiq_user) || # local property for sidekiq only
-          fetch(:sidekiq_user) ||
-          properties.fetch(:run_as) || # global property across multiple capistrano gems
+        properties.fetch(:sidekiq_user, nil) || # local property for sidekiq only
+          fetch(:sidekiq_user, nil) ||
+          properties.fetch(:run_as, nil) || # global property across multiple capistrano gems
           role.user
       end
     end

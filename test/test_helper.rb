@@ -3,6 +3,12 @@
 require 'bundler/setup'
 require 'minitest/autorun'
 
+# Set up test environment
+ENV['TEST'] = 'true'
+
+# Set up minimal Capistrano environment for testing
+require 'capistrano/plugin'
+
 # Set up a minimal Capistrano environment for testing
 module Capistrano
   class Plugin
@@ -69,5 +75,5 @@ module Capistrano
   end
 end
 
-# Load the gem
+# Load the gem without bundler dependency
 require 'capistrano/sidekiq'
