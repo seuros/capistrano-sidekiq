@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-minitest
   - rubocop-rake
 
@@ -31,6 +31,10 @@ Style/StringLiterals:
 Style/HashSyntax:
   EnforcedStyle: ruby19
 
+Style/IdenticalConditionalBranches:
+  Exclude:
+    - 'test/**/*'
+
 # Metrics cops
 Metrics/MethodLength:
   Max: 20
@@ -47,6 +51,17 @@ Metrics/BlockLength:
     - 'test/**/*'
     - '*.gemspec'
     - 'Rakefile'
+    - 'lib/capistrano/tasks/**/*'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'test/**/*'
+    - 'lib/capistrano/tasks/**/*'
+    - 'lib/capistrano/sidekiq.rb'
+    - 'lib/capistrano/sidekiq/systemd.rb'
+
+Minitest/MultipleAssertions:
+  Max: 15
 
 # Minitest cops
 Minitest/AssertEmptyLiteral:
@@ -62,12 +77,27 @@ Minitest/RefuteFalse:
 Rake/Desc:
   Enabled: false
 
+Rake/MethodDefinitionInTask:
+  Enabled: false
+
 # Naming cops
 Naming/FileName:
   Exclude:
-    - 'lib/capistrano3-sidekiq.rb'
+    - 'lib/capistrano-sidekiq.rb'
+
+# Gemspec cops
+Gemspec/DevelopmentDependencies:
+  Enabled: false
 
 # Lint cops
 Lint/MissingSuper:
   Exclude:
     - 'lib/capistrano/**/*'
+
+Lint/EmptyFile:
+  Exclude:
+    - 'lib/capistrano-sidekiq.rb'
+
+Lint/DuplicateBranch:
+  Exclude:
+    - 'test/**/*'

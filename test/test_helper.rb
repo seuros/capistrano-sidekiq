@@ -10,24 +10,24 @@ module Capistrano
     def define_tasks; end
     def register_hooks; end
   end
-  
+
   module DSL
     module Env
       def fetch(key, default = nil, &block)
         @config ||= {}
         @config[key] || (block_given? ? block.call : default)
       end
-      
+
       def set(key, value)
         @config ||= {}
         @config[key] = value
       end
-      
+
       def set_if_empty(key, value)
         @config ||= {}
         @config[key] ||= value.respond_to?(:call) ? value : value
       end
-      
+
       def append(key, *values)
         @config ||= {}
         @config[key] ||= []
@@ -35,36 +35,36 @@ module Capistrano
       end
     end
   end
-  
+
   class Configuration
     include DSL::Env
   end
-  
+
   def self.configuration
     @configuration ||= Configuration.new
   end
-  
+
   class Plugin
     include DSL::Env
-    
+
     def self.config
       Capistrano.configuration
     end
-    
-    def fetch(*args, &block)
-      self.class.config.fetch(*args, &block)
+
+    def fetch(*, &)
+      self.class.config.fetch(*, &)
     end
-    
-    def set(*args)
-      self.class.config.set(*args)
+
+    def set(*)
+      self.class.config.set(*)
     end
-    
-    def set_if_empty(*args)
-      self.class.config.set_if_empty(*args)
+
+    def set_if_empty(*)
+      self.class.config.set_if_empty(*)
     end
-    
-    def append(*args)
-      self.class.config.append(*args)
+
+    def append(*)
+      self.class.config.append(*)
     end
   end
 end

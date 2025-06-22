@@ -1,4 +1,3 @@
-# encoding: UTF-8
 # frozen_string_literal: true
 
 git_plugin = self
@@ -56,11 +55,11 @@ namespace :sidekiq do
   task :enable do
     on roles(fetch(:sidekiq_roles)) do |role|
       git_plugin.config_files(role).each do |config_file|
-        git_plugin.execute_systemd("enable", git_plugin.sidekiq_service_file_name(config_file))
+        git_plugin.execute_systemd('enable', git_plugin.sidekiq_service_file_name(config_file))
       end
 
       if fetch(:sidekiq_enable_lingering) && fetch(:sidekiq_lingering_user)
-        execute :loginctl, "enable-linger", fetch(:sidekiq_lingering_user)
+        execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
       end
     end
   end
@@ -69,17 +68,17 @@ namespace :sidekiq do
   task :disable do
     on roles(fetch(:sidekiq_roles)) do |role|
       git_plugin.config_files(role).each do |config_file|
-        git_plugin.execute_systemd("disable", git_plugin.sidekiq_service_file_name(config_file))
+        git_plugin.execute_systemd('disable', git_plugin.sidekiq_service_file_name(config_file))
       end
     end
   end
 
   def fetch_systemd_unit_path
     if fetch(:sidekiq_systemctl_user) == :system
-      "/etc/systemd/system/"
+      '/etc/systemd/system/'
     else
       home_dir = backend.capture :pwd
-      File.join(home_dir, ".config", "systemd", "user")
+      File.join(home_dir, '.config', 'systemd', 'user')
     end
   end
 
@@ -88,17 +87,17 @@ namespace :sidekiq do
     backend.execute :mkdir, '-p', systemd_path if fetch(:sidekiq_systemctl_user) != :system
 
     config_files(role).each do |config_file|
-        ctemplate = compiled_template(config_file)
-        temp_file_name = File.join('/tmp', "sidekiq.#{config_file}.service")
-        systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
-        backend.upload!(StringIO.new(ctemplate), temp_file_name)
-        if fetch(:sidekiq_systemctl_user) != :system
-          warn "Moving #{temp_file_name} to #{systemd_file_name}"
-          backend.execute :mv, temp_file_name, systemd_file_name
-        else
-          warn "Installing #{systemd_file_name} as root"
-          backend.execute :sudo, :mv, temp_file_name, systemd_file_name
-        end
+      ctemplate = compiled_template(config_file)
+      temp_file_name = File.join('/tmp', "sidekiq.#{config_file}.service")
+      systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
+      backend.upload!(StringIO.new(ctemplate), temp_file_name)
+      if fetch(:sidekiq_systemctl_user) == :system
+        warn "Installing #{systemd_file_name} as root"
+        backend.execute :sudo, :mv, temp_file_name, systemd_file_name
+      else
+        warn "Moving #{temp_file_name} to #{systemd_file_name}"
+        backend.execute :mv, temp_file_name, systemd_file_name
+      end
     end
   end
 
@@ -107,12 +106,12 @@ namespace :sidekiq do
 
     config_files(role).each do |config_file|
       systemd_file_name = File.join(systemd_path, sidekiq_service_file_name(config_file))
-      if fetch(:sidekiq_systemctl_user) != :system
-        warn "Deleting #{systemd_file_name}"
-        backend.execute :rm, "-f", systemd_file_name
-      else
+      if fetch(:sidekiq_systemctl_user) == :system
         warn "Deleting #{systemd_file_name} as root"
-        backend.execute :sudo, :rm, "-f", systemd_file_name
+        backend.execute :sudo, :rm, '-f', systemd_file_name
+      else
+        warn "Deleting #{systemd_file_name}"
+        backend.execute :rm, '-f', systemd_file_name
       end
     end
   end
@@ -121,21 +120,21 @@ namespace :sidekiq do
     config_files(role).each do |config_file|
       sidekiq_service = sidekiq_service_unit_name(config_file)
       warn "Quieting #{sidekiq_service}"
-      execute_systemd("kill -s TSTP", sidekiq_service)
+      execute_systemd('kill -s TSTP', sidekiq_service)
     end
   end
 
   def sidekiq_service_unit_name(config_file)
-    if config_file != "sidekiq.yml"
-      fetch(:sidekiq_service_unit_name) + "." + config_file.split(".")[0..-2].join(".")
-    else
+    if config_file == 'sidekiq.yml'
       fetch(:sidekiq_service_unit_name)
+    else
+      "#{fetch(:sidekiq_service_unit_name)}.#{config_file.split('.')[0..-2].join('.')}"
     end
   end
 
   def sidekiq_service_file_name(config_file)
     ## Remove the extension
-    config_file = config_file.split('.')[0..-1].join('.')
+    config_file = config_file.split('.').join('.')
 
     "#{sidekiq_service_unit_name(config_file)}.service"
   end
