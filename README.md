@@ -88,6 +88,9 @@ set :sidekiq_error_log, -> { File.join(shared_path, 'log', 'sidekiq.error.log') 
 set :sidekiq_command, 'sidekiq'  # Use 'sidekiq' or 'sidekiqswarm' for Enterprise
 set :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)}" }
 
+# Use login shell to load environment (for rbenv, rvm, etc.)
+set :sidekiq_use_login_shell, true
+
 # Sidekiq Enterprise - Swarm configuration
 set :sidekiq_command, 'sidekiqswarm'
 set :sidekiq_swarm_env_vars, [

@@ -31,6 +31,9 @@ module Capistrano
       # Deployment tracking for Sidekiq 7+ metrics
       set_if_empty :sidekiq_mark_deploy, false
       set_if_empty :sidekiq_deploy_label, nil
+      
+      # Login shell option for loading environment
+      set_if_empty :sidekiq_use_login_shell, false
     end
 
     def fetch_systemd_unit_path

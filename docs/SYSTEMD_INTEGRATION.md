@@ -263,6 +263,93 @@ sudo loginctl enable-linger $USER
 4. **Resource Limits**: Configure systemd resource limits if needed
 5. **Logging**: Use structured logging and centralized log management
 
+## Starting Sidekiq on System Boot
+
+### For System Services
+
+System services automatically start on boot when enabled:
+
+```bash
+cap production sidekiq:install
+cap production sidekiq:enable
+```
+
+The service will start automatically after system reboots.
+
+### For User Services
+
+User services require systemd lingering to start without login:
+
+```bash
+# Enable lingering for the deploy user
+sudo loginctl enable-linger deploy
+
+# Install and enable the service
+cap production sidekiq:install
+cap production sidekiq:enable
+```
+
+### Verifying Auto-Start
+
+After reboot, verify services are running:
+
+```bash
+# For system services
+sudo systemctl status myapp_sidekiq_production
+
+# For user services
+systemctl --user status myapp_sidekiq_production
+```
+
+## Automatic Restart on Failure
+
+The systemd service template includes automatic restart configuration:
+
+```ini
+[Service]
+Restart=on-failure
+RestartSec=1
+```
+
+This ensures Sidekiq restarts if it crashes. For additional reliability:
+
+### Custom Restart Configuration
+
+Create a custom service template with enhanced restart options:
+
+```erb
+[Service]
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitInterval=60s
+```
+
+### Health Monitoring
+
+Consider adding external monitoring:
+
+1. **Systemd Watchdog**: Already configured with `WatchdogSec=10`
+2. **External Monitoring**: Use tools like Monit, God, or custom scripts
+3. **Application Monitoring**: New Relic, Datadog, etc.
+
+### Process Management Best Practices
+
+1. **Memory Limits**: Prevent memory leaks from affecting the system
+   ```ruby
+   set :sidekiq_service_unit_env_vars, ['SIDEKIQ_MAXMEM_MB=1024']
+   ```
+
+2. **CPU Limits**: Prevent runaway processes
+   ```erb
+   CPUQuota=80%
+   ```
+
+3. **Restart Notifications**: Get alerted when services restart
+   ```erb
+   ExecStopPost=/usr/local/bin/notify-restart.sh
+   ```
+
 ## Advanced Configuration
 
 ### Custom Service Templates
@@ -274,6 +361,63 @@ set :sidekiq_service_templates_path, 'config/deploy/templates'
 ```
 
 Place your template at: `config/deploy/templates/sidekiq.service.capistrano.erb`
+
+### Custom ExecStart Path
+
+To customize the command that starts Sidekiq:
+
+#### Option 1: Using Configuration
+
+```ruby
+# config/deploy.rb
+
+# Custom sidekiq binary path
+set :sidekiq_command, '/usr/local/bin/sidekiq'
+
+# Custom bundle path
+set :bundle_bins, ['sidekiq']
+set :bundle_path, '/usr/local/bundle'
+```
+
+#### Option 2: Custom Service Template
+
+Create `config/deploy/templates/sidekiq.service.capistrano.erb`:
+
+```erb
+[Unit]
+Description=Sidekiq for <%= "#{fetch(:application)} (#{fetch(:stage)})" %>
+After=syslog.target network.target
+
+[Service]
+Type=notify
+WatchdogSec=10
+WorkingDirectory=<%= current_path %>
+
+# Custom ExecStart path
+ExecStart=/bin/bash -lc 'cd <%= current_path %> && /usr/local/bin/bundle exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>'
+
+# Or with rbenv
+ExecStart=/home/deploy/.rbenv/bin/rbenv exec bundle exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>
+
+# Or with rvm
+ExecStart=/home/deploy/.rvm/bin/rvm default do bundle exec sidekiq -e <%= fetch(:sidekiq_env) %> <%= sidekiq_config %>
+
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### Option 3: Login Shell Wrapper
+
+For environments requiring login shell initialization:
+
+```erb
+ExecStart=/bin/bash -lc '<%= expanded_bundle_path %> exec <%= fetch(:sidekiq_command) %> <%= fetch(:sidekiq_command_args) %> <%= sidekiq_config %>'
+```
+
+This ensures all environment variables from `.bashrc`, `.bash_profile`, etc. are loaded.
 
 ### Resource Limits
 

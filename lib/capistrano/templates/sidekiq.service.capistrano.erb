@@ -20,7 +20,11 @@ Type=notify
 WatchdogSec=10
 <%="User=#{sidekiq_user}" if fetch(:sidekiq_systemctl_user) == :system %>
 WorkingDirectory=<%= current_path %>
+<% if fetch(:sidekiq_use_login_shell) %>
+ExecStart=/bin/bash -lc '<%= expanded_bundle_path %> exec <%= fetch(:sidekiq_command) %> <%= fetch(:sidekiq_command_args) %> <%= sidekiq_config %>'
+<% else %>
 ExecStart=<%= expanded_bundle_path %> exec <%= fetch(:sidekiq_command) %> <%= fetch(:sidekiq_command_args) %> <%= sidekiq_config %>
+<% end %>
 
 # Use `systemctl kill -s TSTP <% sidekiq_service_unit_name(@config_file) %>` to quiet the Sidekiq process
 UMask=0002
