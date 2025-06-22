@@ -6,5 +6,5 @@ source 'https://rubygems.org'
 gemspec
 
 # Ruby 3.4+ compatibility
-gem 'mutex_m'
 gem 'base64'
+gem 'mutex_m'
