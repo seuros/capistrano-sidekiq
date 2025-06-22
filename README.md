@@ -187,11 +187,37 @@ cap sidekiq:install            # Install Sidekiq systemd service
 cap sidekiq:uninstall          # Remove Sidekiq systemd service
 cap sidekiq:enable             # Enable Sidekiq systemd service
 cap sidekiq:disable            # Disable Sidekiq systemd service
+cap sidekiq:mark_deploy        # Mark deployment in Sidekiq metrics (Sidekiq 7+)
 ```
 
 ## Systemd Integration
 
 For detailed information about systemd integration, see [Systemd Integration Guide](docs/SYSTEMD_INTEGRATION.md).
+
+## Deployment Tracking (Sidekiq 7+)
+
+Sidekiq 7 introduced metrics with deployment tracking. Enable it to see deployment markers in your Sidekiq metrics graphs:
+
+### Configuration
+
+```ruby
+# config/deploy.rb
+
+# Enable deployment marking
+set :sidekiq_mark_deploy, true
+
+# Optional: Custom deploy label (defaults to git commit description)
+set :sidekiq_deploy_label, "v#{fetch(:current_revision)[0..6]} deployed to #{fetch(:stage)}"
+```
+
+### How It Works
+
+When enabled, the gem will:
+1. Automatically mark deployments after successful deploys
+2. Show vertical red lines in Sidekiq's metrics graphs
+3. Display the deploy label when hovering over the marker
+
+This helps correlate performance changes with deployments.
 
 ## Sidekiq Enterprise (Swarm) Support
 

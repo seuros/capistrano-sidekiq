@@ -27,6 +27,10 @@ module Capistrano
       # Allow customization of the sidekiq command
       set_if_empty :sidekiq_command, 'sidekiq'
       set_if_empty :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)}" }
+      
+      # Deployment tracking for Sidekiq 7+ metrics
+      set_if_empty :sidekiq_mark_deploy, false
+      set_if_empty :sidekiq_deploy_label, nil
     end
 
     def fetch_systemd_unit_path
