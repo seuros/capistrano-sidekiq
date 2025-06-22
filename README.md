@@ -5,6 +5,15 @@
 
 Sidekiq integration for Capistrano - providing systemd service management and deployment coordination for Sidekiq 7+.
 
+## Example Application
+
+For a complete working example of this gem in action, see the [capistrano-example-app](https://github.com/seuros/capistrano-example-app) which demonstrates:
+- Rails 8.0 deployment with Capistrano
+- Sidekiq 7.0 with Redis 7+
+- Systemd service management
+- rbenv integration
+- Complete deployment guide
+
 ## Installation
 
 Add to your Gemfile:
