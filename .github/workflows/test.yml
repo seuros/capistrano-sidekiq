@@ -9,7 +9,10 @@ on:
 jobs:
   rake:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        ruby-version: ['3.2', '3.3']
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,14 +20,20 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
           
-      - name: Run Rake Task
-        run: bundle exec rake
+      - name: Run RuboCop
+        run: bundle exec rubocop
+        
+      - name: Run Tests
+        run: bundle exec rake test
 
-      - name: Upload Capistrano log
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: capistrano-log-${{ matrix.ruby-version }}
-          path: test/log/*.log
+          name: test-results-${{ matrix.ruby-version }}
+          path: |
+            test/log/*.log
+            test/*.log

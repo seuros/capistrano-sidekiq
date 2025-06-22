@@ -1,0 +1,73 @@
+require:
+  - rubocop-minitest
+  - rubocop-rake
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'pkg/**/*'
+    - 'test/app/**/*'
+    - 'tmp/**/*'
+
+# Layout cops
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'test/**/*'
+
+# Style cops
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19
+
+# Metrics cops
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - 'test/**/*'
+
+Metrics/ClassLength:
+  Max: 200
+  Exclude:
+    - 'test/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'test/**/*'
+    - '*.gemspec'
+    - 'Rakefile'
+
+# Minitest cops
+Minitest/AssertEmptyLiteral:
+  Enabled: true
+
+Minitest/AssertTruthy:
+  Enabled: true
+
+Minitest/RefuteFalse:
+  Enabled: true
+
+# Rake cops
+Rake/Desc:
+  Enabled: false
+
+# Naming cops
+Naming/FileName:
+  Exclude:
+    - 'lib/capistrano3-sidekiq.rb'
+
+# Lint cops
+Lint/MissingSuper:
+  Exclude:
+    - 'lib/capistrano/**/*'

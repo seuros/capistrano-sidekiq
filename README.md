@@ -3,7 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/capistrano-sidekiq.svg)](http://badge.fury.io/rb/capistrano-sidekiq)
 [![COSS Compliant](https://img.shields.io/badge/COSS-compliant-green.svg)](https://github.com/contriboss/coss_spec)
 
-Sidekiq integration for Capistrano - providing systemd service management and deployment coordination.
+Sidekiq integration for Capistrano - providing systemd service management and deployment coordination for Sidekiq 7+.
 
 ## Installation
 

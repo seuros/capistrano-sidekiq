@@ -20,7 +20,7 @@ type = "github"
 [technical]
 primary_languages = ["Ruby"]
 frameworks = ["Capistrano", "Sidekiq"]
-minimum_ruby_version = "2.5.0"
+minimum_ruby_version = "3.2.0"
 
 [build]
 commands = ["bundle install"]
@@ -81,9 +81,9 @@ security_policy = "planned"
 vulnerability_reporting = "via GitHub Security Advisories"
 
 [compatibility]
-sidekiq_versions = "6.0+"
+sidekiq_versions = "7.0+"
 capistrano_versions = "3.9+"
-ruby_versions = "2.5+"
+ruby_versions = "3.2+"
 systemd_versions = "206+"
 
 [features]

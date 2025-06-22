@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'test_helper'
 
 class UnitTest < Minitest::Test
@@ -13,12 +15,12 @@ class UnitTest < Minitest::Test
   def test_sidekiq_common_module
     obj = Object.new
     obj.extend(Capistrano::SidekiqCommon)
-    
+
     # Test sidekiq_config method
-    obj.instance_variable_set(:@config_file, "custom.yml")
-    assert_equal "--config config/custom.yml", obj.sidekiq_config
-    
-    obj.instance_variable_set(:@config_file, "sidekiq.yml")
+    obj.instance_variable_set(:@config_file, 'custom.yml')
+    assert_equal '--config config/custom.yml', obj.sidekiq_config
+
+    obj.instance_variable_set(:@config_file, 'sidekiq.yml')
     assert_nil obj.sidekiq_config
   end
 
