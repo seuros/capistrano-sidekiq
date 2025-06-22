@@ -1,6 +1,15 @@
 # Changelog
 
-## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.1.0...master)
+## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.2.0...master)
+
+## [3.2.0](https://github.com/seuros/capistrano-sidekiq/compare/v3.1.0...v3.2.0) - 2025-06-22
+
+### Changed
+- Harmonized interface with capistrano-puma for better ecosystem consistency
+- Aligned configuration variable naming patterns
+- Unified systemd command execution methods  
+- Standardized template search order across both gems
+- Added documentation reference to example application
 
 ## [3.1.0](https://github.com/seuros/capistrano-sidekiq/compare/v3.0.0...v3.1.0) - 2025-06-22
 
