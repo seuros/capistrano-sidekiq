@@ -175,6 +175,74 @@ You can also target specific servers:
 cap production sidekiq:restart --hosts=worker1.example.com
 ```
 
+## Multiple Processes
+
+There are two ways to run multiple Sidekiq processes:
+
+### Option 1: Multiple Config Files (Recommended)
+
+Create separate config files for different workloads:
+
+```yaml
+# config/sidekiq_critical.yml
+:concurrency: 5
+:queues:
+  - [critical, 2]
+
+# config/sidekiq_default.yml  
+:concurrency: 10
+:queues:
+  - [default, 1]
+  - [low, 1]
+```
+
+Configure in deploy.rb:
+```ruby
+set :sidekiq_config_files, ['sidekiq_critical.yml', 'sidekiq_default.yml']
+```
+
+This creates separate services:
+- `myapp_sidekiq_production.sidekiq_critical`
+- `myapp_sidekiq_production.sidekiq_default`
+
+Benefits:
+- Clear purpose for each process
+- Independent scaling and management
+- Different configurations per process
+- Meaningful service names
+
+### Option 2: Sidekiq Enterprise (Sidekiqswarm)
+
+For simple scaling with identical processes:
+
+```ruby
+set :sidekiq_command, 'sidekiqswarm'
+set :sidekiq_service_unit_env_vars, ['SIDEKIQ_COUNT=10']
+```
+
+This runs 10 identical processes with a single service.
+
+### Quick Setup for Multiple Processes
+
+Use the helper task to generate config files:
+
+```bash
+# Generate 5 config files
+bundle exec cap production sidekiq:helpers:generate_configs[5]
+
+# This creates:
+# - config/sidekiq.yml (critical, high queues)
+# - config/sidekiq_1.yml (default, medium queues)
+# - config/sidekiq_2.yml (low, background queues)
+# - config/sidekiq_3.yml (low, background queues)
+# - config/sidekiq_4.yml (low, background queues)
+```
+
+Then add to your deploy.rb:
+```ruby
+set :sidekiq_config_files, ['sidekiq.yml', 'sidekiq_1.yml', 'sidekiq_2.yml', 'sidekiq_3.yml', 'sidekiq_4.yml']
+```
+
 ## Available Tasks
 
 ```bash
@@ -191,6 +259,10 @@ cap sidekiq:uninstall          # Remove Sidekiq systemd service
 cap sidekiq:enable             # Enable Sidekiq systemd service
 cap sidekiq:disable            # Disable Sidekiq systemd service
 cap sidekiq:mark_deploy        # Mark deployment in Sidekiq metrics (Sidekiq 7+)
+
+# Helper tasks
+cap sidekiq:helpers:generate_configs[3]  # Generate 3 config files
+cap sidekiq:helpers:show_config          # Show current configuration
 ```
 
 ## Systemd Integration
