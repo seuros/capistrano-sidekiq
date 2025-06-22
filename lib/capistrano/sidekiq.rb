@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'capistrano/bundler'
+require 'capistrano/bundler' unless ENV['TEST']
 require 'capistrano/plugin'
 
 module Capistrano
   module SidekiqCommon
-    def compiled_template(config_file = "sidekiq.yml")
+    def compiled_template(config_file = 'sidekiq.yml')
       @config_file = config_file
       local_template_directory = fetch(:sidekiq_service_templates_path)
       search_paths = [
@@ -25,15 +25,15 @@ module Capistrano
     end
 
     def sidekiq_config
-      "--config config/#{@config_file}" if @config_file != "sidekiq.yml"
+      "--config config/#{@config_file}" if @config_file != 'sidekiq.yml'
     end
 
-    def switch_user(role, &block)
+    def switch_user(role, &)
       su_user = sidekiq_user(role)
       if su_user == role.user
         yield
       else
-        backend.as su_user, &block
+        backend.as(su_user, &)
       end
     end
 
@@ -42,13 +42,14 @@ module Capistrano
         fetch(:sidekiq_user)
       else
         properties = role.properties
-        properties.fetch(:sidekiq_user) || # local property for sidekiq only
-          fetch(:sidekiq_user) ||
-          properties.fetch(:run_as) || # global property across multiple capistrano gems
+        properties.fetch(:sidekiq_user, nil) || # local property for sidekiq only
+          fetch(:sidekiq_user, nil) ||
+          properties.fetch(:run_as, nil) || # global property across multiple capistrano gems
           role.user
       end
     end
   end
+
   class Sidekiq < Capistrano::Plugin
     def define_tasks
       eval_rakefile File.expand_path('tasks/sidekiq.rake', __dir__)
@@ -59,7 +60,7 @@ module Capistrano
 
       set_if_empty :sidekiq_env, -> { fetch(:rack_env, fetch(:rails_env, fetch(:rake_env, fetch(:stage)))) }
       set_if_empty :sidekiq_roles, fetch(:sidekiq_role, :worker)
-      set_if_empty :sidekiq_configs, %w[sidekiq]  # sidekiq.yml
+      set_if_empty :sidekiq_configs, %w[sidekiq] # sidekiq.yml
 
       set_if_empty :sidekiq_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }
       set_if_empty :sidekiq_error_log, -> { File.join(shared_path, 'log', 'sidekiq.log') }

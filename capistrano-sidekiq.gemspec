@@ -4,7 +4,7 @@ require_relative 'lib/capistrano/sidekiq/version'
 
 Gem::Specification.new do |spec|
   spec.name = 'capistrano-sidekiq'
-  spec.version = Capistrano::SidekiqVERSION
+  spec.version = Capistrano::SIDEKIQ_VERSION
   spec.authors = ['Abdelkader Boudih']
   spec.email = ['terminale@gmail.com']
   spec.description = 'Sidekiq integration for Capistrano'
@@ -20,14 +20,15 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'capistrano', '>= 3.9.0'
   spec.add_dependency 'capistrano-bundler'
   spec.add_dependency 'sidekiq', '>= 7.0'
-  
+
   spec.add_development_dependency 'minitest', '~> 5.0'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rubocop', '~> 1.50'
   spec.add_development_dependency 'rubocop-minitest', '~> 0.30'
   spec.add_development_dependency 'rubocop-rake', '~> 0.6'
-  
+
   spec.post_install_message = '
     Version 3.0.0 is a major release. Please see README.md, breaking changes are listed in CHANGELOG.md
   '
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

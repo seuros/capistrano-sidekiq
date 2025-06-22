@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :deploy do
   before :starting, :check_sidekiq_hooks do
     invoke 'sidekiq:add_default_hooks' if fetch(:sidekiq_default_hooks)
@@ -25,15 +27,15 @@ namespace :sidekiq do
           rescue StandardError
             "#{fetch(:application)} #{fetch(:stage)} deploy"
           end
-          
+
           info "Marking deployment in Sidekiq metrics: #{deploy_label}"
-          
+
           # Create a Ruby script to mark the deployment
           mark_deploy_script = <<~RUBY
             require 'sidekiq/deploy'
             Sidekiq::Deploy.mark!(ARGV[0])
           RUBY
-          
+
           # Execute the script with the deploy label
           execute :bundle, :exec, :ruby, '-e', mark_deploy_script, '--', deploy_label
         end

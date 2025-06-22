@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 lock '~> 3.17.0'
 
 set :application, 'capistrano_sidekiq_test'
