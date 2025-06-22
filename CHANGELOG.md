@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.0.0...master)
+## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.1.0...master)
+
+## [3.1.0](https://github.com/seuros/capistrano-sidekiq/compare/v3.0.0...v3.1.0) - 2025-06-22
 
 ### Fixed
 - Fix undefined method 'as' error by properly calling backend.as (#327)
@@ -10,15 +12,23 @@
 - Align configuration pattern with capistrano-puma for consistency
 
 ### Added
+- Add sidekiqswarm support for Sidekiq Enterprise
+- Add deployment tracking for Sidekiq 7+ metrics (`sidekiq_mark_deploy`)
+- Add login shell option for systemd (`sidekiq_use_login_shell`)
+- Add configurable sidekiq command (`sidekiq_command`, `sidekiq_command_args`)
+- Add helper tasks for generating multiple config files
 - Add comprehensive documentation for per-server configuration (#312)
 - Add detailed systemd integration guide (#240)
-- Add GitHub Actions CI workflow
-- Add Docker-based integration tests
+- Add GitHub Actions CI workflow with Ruby 3.2+ support
+- Add COSS specification compliance
 - Add shared configuration support with other Capistrano service gems
 
 ### Changed
+- Update minimum Ruby version to 3.2+ (required by Sidekiq 7)
 - Use consistent sidekiq-prefixed variables for systemd configuration
 - Improve README documentation with shared configuration examples
+- Update CI to test with Ruby 3.2 and 3.3
+- Enhance systemd service template with configurable features
 
 ## [3.0.0](https://github.com/seuros/capistrano-sidekiq/compare/v2.3.0...v3.0.0)
 - Rewrite to match capistrano3-puma api
