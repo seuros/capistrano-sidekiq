@@ -5,6 +5,8 @@
 
 Sidekiq integration for Capistrano - providing systemd service management and deployment coordination for Sidekiq 7+.
 
+**Upgrading from v2.x?** See the [Migration Guide](MIGRATION_FROM_V2.md) for breaking changes and upgrade instructions.
+
 ## Example Application
 
 For a complete working example of this gem in action, see the [capistrano-example-app](https://github.com/seuros/capistrano-example-app) which demonstrates:
@@ -35,9 +37,11 @@ Add to your Capfile:
 ```ruby
 # Capfile
 require 'capistrano/sidekiq'
-install_plugin Capistrano::Sidekiq  # Default sidekiq tasks
-install_plugin Capistrano::Sidekiq::Systemd  # Systemd integration
+install_plugin Capistrano::Sidekiq  # Default sidekiq tasks (REQUIRED!)
+install_plugin Capistrano::Sidekiq::Systemd  # Systemd integration (REQUIRED!)
 ```
+
+**Important:** Both `require` and `install_plugin` lines are necessary. The `require` loads the gem code, while `install_plugin` actually registers the Capistrano tasks. Without `install_plugin`, commands like `cap sidekiq:start` will not be available.
 
 ## Configuration Options
 
