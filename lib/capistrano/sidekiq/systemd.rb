@@ -12,7 +12,6 @@ module Capistrano
       def set_defaults
         set_if_empty :systemctl_bin, '/bin/systemctl'
         set_if_empty :service_unit_user, :user
-        set_if_empty :systemctl_user, -> { fetch(:service_unit_user, :user) == :user }
 
         set_if_empty :sidekiq_systemctl_bin, -> { fetch(:systemctl_bin) }
         set_if_empty :sidekiq_service_unit_name, -> { "#{fetch(:application)}_sidekiq_#{fetch(:stage)}" }
