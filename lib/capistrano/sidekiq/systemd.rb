@@ -4,6 +4,7 @@ module Capistrano
   class Sidekiq
     class Systemd < Capistrano::Plugin
       include SidekiqCommon
+
       def define_tasks
         eval_rakefile File.expand_path('../tasks/systemd.rake', __dir__)
         eval_rakefile File.expand_path('../tasks/helpers.rake', __dir__)

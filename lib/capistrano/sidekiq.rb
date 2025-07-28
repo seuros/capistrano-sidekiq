@@ -9,17 +9,17 @@ module Capistrano
       @role = role
       @config_file = config_file
       file = [
-          "lib/capistrano/templates/#{from}-#{role.hostname}-#{fetch(:stage)}.rb",
-          "lib/capistrano/templates/#{from}-#{role.hostname}.rb",
-          "lib/capistrano/templates/#{from}-#{fetch(:stage)}.rb",
-          "lib/capistrano/templates/#{from}.rb.erb",
-          "lib/capistrano/templates/#{from}.rb",
-          "lib/capistrano/templates/#{from}.erb",
-          "config/deploy/templates/#{from}.rb.erb",
-          "config/deploy/templates/#{from}.rb",
-          "config/deploy/templates/#{from}.erb",
-          File.expand_path("../templates/#{from}.erb", __FILE__),
-          File.expand_path("../templates/#{from}.rb.erb", __FILE__)
+        "lib/capistrano/templates/#{from}-#{role.hostname}-#{fetch(:stage)}.rb",
+        "lib/capistrano/templates/#{from}-#{role.hostname}.rb",
+        "lib/capistrano/templates/#{from}-#{fetch(:stage)}.rb",
+        "lib/capistrano/templates/#{from}.rb.erb",
+        "lib/capistrano/templates/#{from}.rb",
+        "lib/capistrano/templates/#{from}.erb",
+        "config/deploy/templates/#{from}.rb.erb",
+        "config/deploy/templates/#{from}.rb",
+        "config/deploy/templates/#{from}.erb",
+        File.expand_path("../templates/#{from}.erb", __FILE__),
+        File.expand_path("../templates/#{from}.rb.erb", __FILE__)
       ].detect { |path| File.file?(path) }
       erb = File.read(file)
       StringIO.new(ERB.new(erb, trim_mode: '-').result(binding))
@@ -37,12 +37,12 @@ module Capistrano
       "--config config/#{@config_file}" if @config_file != 'sidekiq.yml'
     end
 
-    def sidekiq_switch_user(role, &block)
+    def sidekiq_switch_user(role, &)
       su_user = sidekiq_user(role)
       if su_user == role.user
         yield
       else
-        backend.as(su_user, &block)
+        backend.as(su_user, &)
       end
     end
 
@@ -52,7 +52,7 @@ module Capistrano
       else
         properties = role.properties
         return role.user unless properties
-        
+
         properties.fetch(:sidekiq_user) || # local property for sidekiq only
           fetch(:sidekiq_user, nil) ||
           properties.fetch(:run_as) || # global property across multiple capistrano gems
