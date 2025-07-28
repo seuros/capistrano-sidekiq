@@ -58,8 +58,8 @@ namespace :sidekiq do
         git_plugin.execute_systemd('enable', git_plugin.sidekiq_service_file_name(config_file))
       end
 
-      if fetch(:sidekiq_enable_lingering) && fetch(:sidekiq_lingering_user)
-        execute :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
+      if fetch(:sidekiq_enable_lingering)
+        sudo :loginctl, 'enable-linger', fetch(:sidekiq_lingering_user)
       end
     end
   end
