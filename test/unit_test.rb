@@ -45,6 +45,14 @@ class SidekiqCommonTest < Minitest::Test
     @config[key] || default
   end
 
+  # A real Capistrano server: its Properties#fetch takes a single argument,
+  # unlike Hash#fetch, so a Hash stub would hide arity bugs.
+  def server(user, **properties)
+    Capistrano::Configuration::Server.new("#{user}@localhost").tap do |s|
+      properties.each { |k, v| s.properties.set(k, v) }
+    end
+  end
+
   def test_sidekiq_user_with_nil_role
     @config = { sidekiq_user: 'sidekiq' }
 
@@ -52,17 +60,24 @@ class SidekiqCommonTest < Minitest::Test
   end
 
   def test_sidekiq_user_with_role
-    role = Struct.new(:user, :properties).new('deploy', {})
+    role = server('deploy')
     @config = {}
 
     assert_equal 'deploy', sidekiq_user(role)
   end
 
   def test_sidekiq_user_with_role_property
-    role = Struct.new(:user, :properties).new('deploy', { sidekiq_user: 'custom' })
+    role = server('deploy', sidekiq_user: 'custom')
     @config = {}
 
     assert_equal 'custom', sidekiq_user(role)
+  end
+
+  def test_sidekiq_user_with_run_as_property
+    role = server('deploy', run_as: 'shared')
+    @config = {}
+
+    assert_equal 'shared', sidekiq_user(role)
   end
 
   def test_sidekiq_config_default

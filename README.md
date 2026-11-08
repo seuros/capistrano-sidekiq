@@ -374,6 +374,7 @@ For systems with older Systemd versions where `append:` is not supported:
 
 1. Sidekiq messages are sent to syslog by default
 2. Configure system logger to filter Sidekiq messages
+3. See [wiki](/../../wiki/Configuring-append-mode-log-files-via-Syslog-NG) for detailed setup instructions
 
 ## Example Application
 

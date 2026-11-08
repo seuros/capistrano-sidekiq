@@ -58,7 +58,7 @@ module Capistrano
 
       def sudo_if_needed(*command)
         if fetch(:sidekiq_systemctl_user) == :system
-          backend.sudo command.map(&:to_s).join(' ')
+          backend.sudo command.join(' ')
         else
           backend.execute(*command)
         end
