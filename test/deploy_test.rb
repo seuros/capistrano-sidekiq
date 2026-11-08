@@ -14,7 +14,7 @@ class DeployTest < Minitest::Test
 
   def self.before_suite
     system 'docker build -t capistrano-sidekiq-test-server test'
-    self.container_id = `docker run -d --privileged -p 8022:22 -p 6379:6379 -v #{Dir.pwd}:/src:ro capistrano-sidekiq-test-server`.strip
+    self.container_id = `docker run -d --rm --privileged -p 8022:22 -p 6379:6379 -v #{Dir.pwd}:/src:ro capistrano-sidekiq-test-server`.strip
     sleep 5 # Give systemd time to start
 
     # Start Redis inside container
