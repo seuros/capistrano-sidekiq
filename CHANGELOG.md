@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/seuros/capistrano-sidekiq/compare/v3.2.0...master)
 
+### Added
+- Add `sidekiq_service_unit_bundle_command` (shared: `service_unit_bundle_command`) to set the bundle command in the
+  unit's `ExecStart`, e.g. so the unit follows the release's `.ruby-version` instead of the deploy's Ruby version
+
 ## [3.2.0](https://github.com/seuros/capistrano-sidekiq/compare/v3.1.0...v3.2.0) - 2025-06-22
 
 ### Changed
