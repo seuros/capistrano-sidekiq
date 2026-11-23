@@ -69,6 +69,7 @@ This gem follows the Capistrano convention of sharing common settings across mul
 - `:lingering_user` - User for systemd lingering (for user services)
 - `:service_unit_env_files` - Shared environment files
 - `:service_unit_env_vars` - Shared environment variables
+- `:service_unit_bundle_command` - Shared bundle command for the units' `ExecStart`
 
 Each gem can override these with prefixed versions (e.g., `:sidekiq_systemctl_user`).
 
@@ -104,6 +105,9 @@ set :sidekiq_command_args, -> { "-e #{fetch(:sidekiq_env)}" }
 # Use login shell to load environment (for rbenv, rvm, etc.)
 set :sidekiq_use_login_shell, true
 
+# Bundle command written into the unit's ExecStart (defaults to the deploy's own bundle command)
+set :sidekiq_service_unit_bundle_command, -> { "#{fetch(:rvm_path)}/bin/rvm in #{current_path} do bundle" }
+
 # Sidekiq Enterprise - Swarm configuration
 set :sidekiq_command, 'sidekiqswarm'
 set :sidekiq_swarm_env_vars, [
@@ -116,6 +120,24 @@ set :sidekiq_service_unit_env_vars, -> {
   fetch(:sidekiq_service_unit_env_vars, []) + fetch(:sidekiq_swarm_env_vars, [])
 }
 ```
+
+### Ruby Version in the Service Unit
+
+`ExecStart` runs `bundle` with `:sidekiq_service_unit_bundle_command`. When it is not set, the unit uses the deploy's own
+bundle command (`SSHKit.config.command_map[:bundle]`). With capistrano-rvm or capistrano-rbenv that command names a Ruby
+version, for example `~/.rvm/bin/rvm 3.4.1 do bundle`, so the version is written into the unit and every Ruby upgrade
+needs another `sidekiq:install`.
+
+To have the service run the Ruby version of the release it starts from, use a command that reads the release's
+`.ruby-version`. With rvm:
+
+```ruby
+set :sidekiq_service_unit_bundle_command, -> { "#{fetch(:rvm_path)}/bin/rvm in #{current_path} do bundle" }
+```
+
+Like the default, the command is expanded on the server with `echo` when the unit is written: `~` and `$HOME` are
+resolved and shell quoting is removed, so avoid arguments that need quotes. Set the shared `:service_unit_bundle_command`
+instead to use the same command for other gems that read it.
 
 ### Per-Server Configuration
 
